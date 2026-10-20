@@ -285,3 +285,46 @@ not green. PHP checks and browser tests ran outside the sandbox after its file
 access checks/preview startup prevented normal execution; tests used SQLite memory
 databases and intercepted browser APIs. The initial stalled test processes were
 stopped without touching the user's development server.
+
+### 2026-10-20: slice 3 — service providers
+
+Read `docs/PROVIDERS_STEP.md` for the screen review and Laravel walkthrough.
+Reviewed both provider wireframes at full size and reused the approved OctoGear
+design. Added the Service providers sidebar route, a 25-row paginated directory
+with name/phone/status/city filters, store counts, provider details, and confirmed
+block/unblock. City search reuses the complete local catalog across both account
+directories; it does not call the API while typing. Filters/page survive detail,
+Back and refresh. Existing customer and authentication behavior is preserved.
+
+Moved customer directory/detail/status/API/styling into `features/users`, selected
+by explicit typed customer/provider route configuration. This shares existing
+filtering, request cancellation, type checks, uncertainty handling and confirmed
+account actions instead of maintaining two implementations. The provider detail
+adds `features/providers/provider-stores.component`: Show stores loads only that
+owner's active/inactive stores, with explicit refresh/retry and the existing
+15-store server pagination. Account blocking does not change store activation.
+
+Laravel changes are limited to optional owner_id validation in StoreIndexRequest,
+the owner condition before pagination in AdminStoreService, bilingual validation
+messages and AdminProviderStoresTest. Existing admin routes/controllers/resources,
+authorization, 25-user pages, and 15-store pages remain intact. No migration,
+dependency change, retained-account mutation or production deployment.
+
+Provider email/avatar and provider-level commercial documents are not invented;
+registration belongs to stores. Joining-date filters remain deferred without an
+API contract. Provider/store requests and full store details are later slices.
+
+Verification: Angular typecheck and production build passed. All 37 Playwright
+tests passed (17 auth, 12 customer, 8 provider), using intercepted synthetic data.
+The provider visual test passed again after adjusting screenshot scroll position;
+desktop and Arabic mobile images were inspected. The focused Laravel admin set
+passed 35 tests / 213 assertions. Changed PHP syntax and targeted Pint passed.
+Both project diffs were reviewed and passed whitespace checks.
+
+Full Laravel suite: 573 tests / 5,002 assertions, 569 passing, three failures and
+one error. Failures remain the two documented AuthRateLimitTest OTP-limit
+expectations and GeneralOrderDetailsTest quantity-field expectation. The error is
+the documented demo image-write issue in GeneralOrderDetailsTest. Those areas
+were not changed; the full suite is not green. API tests used SQLite memory
+databases, and browser checks used a dedicated preview on 4202. No live retained
+admin/provider account was used for verification.

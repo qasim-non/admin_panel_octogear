@@ -1,0 +1,32 @@
+<section class="surface-panel directory-panel" aria-labelledby="provider-stores-title">
+    <div class="section-heading">
+        <div class="directory-title"><span class="directory-icon"><i class="pi pi-shop" aria-hidden="true"></i></span><div><h2 id="provider-stores-title">{{ locale.t('providerStores') }}</h2><p>{{ locale.t('providerStoresIntro') }}</p></div></div>
+        @if (opened()) { <button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button> }
+    </div>
+    @if (!opened()) {
+        <div class="store-summary"><button pButton severity="secondary" [outlined]="true" icon="pi pi-shop" [label]="locale.t('showProviderStores')" (click)="show()"></button></div>
+    } @else if (loading()) {
+        <div class="store-summary" role="status" aria-busy="true"><span class="sr-only">{{ locale.t('loadingStores') }}</span><p-skeleton height="8rem"/></div>
+    } @else if (error()) {
+        <div class="store-summary error-panel"><p-message severity="error">{{ error() }}</p-message><button pButton [label]="locale.t('retry')" (click)="refresh()"></button></div>
+    } @else if (!rows().length) {
+        <div class="empty-state"><span class="empty-icon"><i class="pi pi-shop" aria-hidden="true"></i></span><p>{{ locale.t('noProviderStores') }}</p></div>
+    } @else {
+        <p class="table-scroll-hint"><i class="pi pi-arrows-h" aria-hidden="true"></i>{{ locale.t('scrollColumns') }}</p>
+        <div class="table-scroll" role="region" tabindex="0" [attr.aria-label]="locale.t('storeListRegion')">
+            <p-table [value]="rows()" dataKey="id" [tableStyle]="{'min-width': '650px'}">
+                <ng-template #header><tr><th scope="col">{{ locale.t('storeName') }}</th><th scope="col">{{ locale.t('phoneSearch') }}</th><th scope="col">{{ locale.t('city') }}</th><th scope="col">{{ locale.t('status') }}</th></tr></ng-template>
+                <ng-template #body let-store><tr><td><span class="store-name">{{ store.name }}</span><span class="customer-reference">#{{ store.id }}</span></td><td><bdi class="phone" dir="ltr">{{ store.mobile }}</bdi></td><td>{{ store.city?.name ?? locale.t('notProvided') }}</td><td><p-tag [value]="locale.t(store.status === 'active' ? 'activeStore' : 'inactiveStore')" [icon]="store.status === 'active' ? 'pi pi-check-circle' : 'pi pi-pause-circle'" [severity]="store.status === 'active' ? 'success' : 'secondary'"/></td></tr></ng-template>
+            </p-table>
+        </div>
+    }
+    @if (meta(); as pagination) {
+        <footer class="table-footer"><p>{{ locale.t('total') }}: <strong>{{ number(pagination.total) }}</strong> {{ locale.t('stores') }}</p>
+            <nav class="pagination" [attr.aria-label]="locale.t('providerStores')">
+                <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-right' : 'pi pi-angle-left'" [attr.aria-label]="locale.t('previousPage')" [disabled]="pagination.current_page <= 1" (click)="changePage(pagination.current_page - 1)"></button>
+                <span class="page-current" aria-current="page">{{ locale.t('pageNumber') }} {{ number(pagination.current_page) }} / {{ number(pagination.last_page) }}</span>
+                <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-left' : 'pi pi-angle-right'" [attr.aria-label]="locale.t('nextPage')" [disabled]="pagination.current_page >= pagination.last_page" (click)="changePage(pagination.current_page + 1)"></button>
+            </nav>
+        </footer>
+    }
+</section>

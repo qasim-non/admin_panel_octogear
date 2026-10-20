@@ -68,10 +68,10 @@ There is currently no per-role user-management policy or capability flag. The fr
 ## Web files, in review order
 
 1. `src/app/core/api-client.ts`: existing shared client now accepts GET query parameters, PATCH, and typed optional pagination metadata. API base configuration and bearer handling stay centralized.
-2. `src/app/features/customers/customer-api.service.ts`: customer types and the three API operations, response checks, feature error mapping, initials, and UTC date presentation.
-3. `customers.component.ts` / `.html`: reactive filters, URL state, cancelable reads, true server pagination, table, and feedback states.
-4. `customer-detail.component.ts` / `.html`: customer detail, type check, confirmation, single in-flight status write, and reconciliation.
-5. `customer-status.component.ts` and `customers.scss`: shared status presentation and scoped directory/detail styling.
+2. `src/app/features/users/user-api.service.ts`: shared account types and the three API operations, response checks, feature error mapping, initials, and UTC date presentation. `user-directory.config.ts` selects customer/provider labels and expected type; see `PROVIDERS_STEP.md` for the extraction.
+3. `user-directory.component.ts` / `.html`: reactive filters, URL state, cancelable reads, true server pagination, table, and feedback states.
+4. `user-detail.component.ts` / `.html`: detail, type check, confirmation, single in-flight status write, and reconciliation.
+5. `user-status.component.ts` and `users.scss`: shared status presentation and scoped directory/detail styling. Customer routes and behavior are preserved.
 6. `src/app/core/locale.service.ts`: English/Arabic labels. `src/app.routes.ts` and `layout/component/app.menu.ts`: guarded lazy routes and navigation.
 7. `tests/customers.spec.ts`: browser integration cases using synthetic fixtures.
 

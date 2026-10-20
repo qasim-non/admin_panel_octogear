@@ -6,8 +6,10 @@ export const appRoutes: Routes = [
     { path: '', canActivate: [authGuard], canActivateChild: [authGuard], loadComponent: () => import('./app/layout/component/app.layout').then(m => m.AppLayout), children: [
         { path: '', pathMatch: 'full', redirectTo: 'overview' },
         { path: 'overview', loadComponent: () => import('./app/features/overview/overview.component').then(m => m.OverviewComponent) },
-        { path: 'customers', loadComponent: () => import('./app/features/customers/customers.component').then(m => m.CustomersComponent) },
-        { path: 'customers/:id', loadComponent: () => import('./app/features/customers/customer-detail.component').then(m => m.CustomerDetailComponent) }
+        { path: 'providers', data: { userKind: 'providers' }, loadComponent: () => import('./app/features/users/user-directory.component').then(m => m.UserDirectoryComponent) },
+        { path: 'providers/:id', data: { userKind: 'providers' }, loadComponent: () => import('./app/features/users/user-detail.component').then(m => m.UserDetailComponent) },
+        { path: 'customers', data: { userKind: 'customers' }, loadComponent: () => import('./app/features/users/user-directory.component').then(m => m.UserDirectoryComponent) },
+        { path: 'customers/:id', data: { userKind: 'customers' }, loadComponent: () => import('./app/features/users/user-detail.component').then(m => m.UserDetailComponent) }
     ] },
     { path: 'access-denied', data: { denied: true }, loadComponent: () => import('./app/features/status/status.component').then(m => m.StatusComponent) },
     { path: '**', loadComponent: () => import('./app/features/status/status.component').then(m => m.StatusComponent) }

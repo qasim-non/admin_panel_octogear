@@ -1,3 +1,4 @@
+import { ProviderStoresComponent } from '../providers/provider-stores.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -7,22 +8,25 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
+import { USER_DIRECTORIES, UserKind } from './user-directory.config';
 import { LocaleService } from '../../core/locale.service';
-import { Customer, CustomerApi, CustomerStatus, customerDate, customerError, customerInitials } from './customer-api.service';
-import { CustomerStatusComponent } from './customer-status.component';
+import { AdminUser, UserApi, UserStatus, userDate, userError, userInitials } from './user-api.service';
+import { UserStatusComponent } from './user-status.component';
 
 @Component({
-    selector: 'app-customer-detail',
-    imports: [RouterLink, ButtonModule, DialogModule, MessageModule, SkeletonModule, CustomerStatusComponent],
-    templateUrl: './customer-detail.component.html', styleUrl: './customers.scss'
+    selector: 'app-user-detail',
+    imports: [RouterLink, ButtonModule, DialogModule, MessageModule, SkeletonModule, UserStatusComponent, ProviderStoresComponent],
+    templateUrl: './user-detail.component.html', styleUrl: './users.scss'
 })
-export class CustomerDetailComponent {
+export class UserDetailComponent {
     readonly locale = inject(LocaleService);
-    private readonly api = inject(CustomerApi);
+    private readonly api = inject(UserApi);
     private readonly destroyRef = inject(DestroyRef);
     readonly route = inject(ActivatedRoute);
+    readonly config = USER_DIRECTORIES[this.route.snapshot.data['userKind'] as UserKind];
+    readonly copy = this.config.copy;
     private readonly reload = signal(0);
-    readonly data = signal<Customer | null>(null);
+    readonly data = signal<AdminUser | null>(null);
     readonly loading = signal(true);
     readonly error = signal('');
     readonly unavailable = signal(false);
@@ -31,8 +35,8 @@ export class CustomerDetailComponent {
     readonly mutationError = signal('');
     readonly needsRefresh = signal(false);
     readonly updated = signal(false);
-    readonly initials = customerInitials;
-    date(value: string): string { return customerDate(value, this.locale.language(), true); }
+    readonly initials = userInitials;
+    date(value: string): string { return userDate(value, this.locale.language(), true); }
     number(value: number): string { return new Intl.NumberFormat(this.locale.language()).format(value); }
 
     constructor() {
@@ -45,8 +49,8 @@ export class CustomerDetailComponent {
                 this.data.set(null); this.confirmVisible.set(false);
                 if (!Number.isSafeInteger(id) || id <= 0) return of({ data: null, unavailable: true, error: '' });
                 return this.api.get(id).pipe(
-                    map(customer => ({ data: customer.type === 'customer' ? customer : null, unavailable: customer.type !== 'customer', error: '' })),
-                    catchError(error => of({ data: null, unavailable: error instanceof HttpErrorResponse && error.status === 404, error: customerError(error, this.locale) }))
+                    map(customer => ({ data: customer.type === this.config.type ? customer : null, unavailable: customer.type !== this.config.type, error: '' })),
+                    catchError(error => of({ data: null, unavailable: error instanceof HttpErrorResponse && error.status === 404, error: userError(error, this.locale, this.copy.denied) }))
                 );
             }), takeUntilDestroyed()
         ).subscribe(result => {
@@ -65,7 +69,7 @@ export class CustomerDetailComponent {
     changeStatus(): void {
         const customer = this.data();
         if (!customer || this.saving() || this.needsRefresh() || !this.confirmVisible()) return;
-        const status: CustomerStatus = customer.status === 'blocked' ? 'unblocked' : 'blocked';
+        const status: UserStatus = customer.status === 'blocked' ? 'unblocked' : 'blocked';
         this.saving.set(true);
         this.api.setStatus(customer.id, status).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: () => {
@@ -75,7 +79,7 @@ export class CustomerDetailComponent {
             error: error => {
                 this.saving.set(false); this.needsRefresh.set(true);
                 this.mutationError.set(error instanceof HttpErrorResponse && error.status === 403
-                    ? this.locale.t('customerAccessDenied') : this.locale.t('statusUncertain'));
+                    ? this.locale.t(this.copy.denied) : this.locale.t(this.copy.uncertain));
             }
         });
     }

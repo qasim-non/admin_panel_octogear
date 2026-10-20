@@ -10,31 +10,34 @@ import { SelectModule } from 'primeng/select';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { PaginationMeta } from '../../core/api-client';
+import { USER_DIRECTORIES, UserKind } from './user-directory.config';
 import { LocaleService } from '../../core/locale.service';
 import { CitySelectComponent } from '../../shared/city-select.component';
-import { Customer, CustomerApi, CustomerFilters, CustomerStatus, customerDate, customerError, customerInitials } from './customer-api.service';
-import { CustomerStatusComponent } from './customer-status.component';
+import { AdminUser, UserApi, UserFilters, UserStatus, userDate, userError, userInitials } from './user-api.service';
+import { UserStatusComponent } from './user-status.component';
 
 @Component({
-    selector: 'app-customers',
-    imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, MessageModule, SelectModule, SkeletonModule, TableModule, CustomerStatusComponent, CitySelectComponent],
-    templateUrl: './customers.component.html', styleUrl: './customers.scss'
+    selector: 'app-user-directory',
+    imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, MessageModule, SelectModule, SkeletonModule, TableModule, UserStatusComponent, CitySelectComponent],
+    templateUrl: './user-directory.component.html', styleUrl: './users.scss'
 })
-export class CustomersComponent {
+export class UserDirectoryComponent {
     readonly locale = inject(LocaleService);
-    private readonly api = inject(CustomerApi);
+    private readonly api = inject(UserApi);
     private readonly route = inject(ActivatedRoute);
+    readonly config = USER_DIRECTORIES[this.route.snapshot.data['userKind'] as UserKind];
+    readonly copy = this.config.copy;
     private readonly router = inject(Router);
     private readonly reload = signal(0);
     readonly loading = signal(true);
     readonly error = signal('');
-    readonly rows = signal<Customer[]>([]);
+    readonly rows = signal<AdminUser[]>([]);
     readonly meta = signal<PaginationMeta | null>(null);
-    readonly filters = signal<CustomerFilters>({ name: '', mobile: '', status: '', city_id: null, page: 1 });
+    readonly filters = signal<UserFilters>({ name: '', mobile: '', status: '', city_id: null, page: 1 });
     readonly form = new FormGroup({
         name: new FormControl('', { nonNullable: true, validators: Validators.maxLength(100) }),
         mobile: new FormControl('', { nonNullable: true, validators: Validators.maxLength(20) }),
-        status: new FormControl<CustomerStatus | ''>('', { nonNullable: true }),
+        status: new FormControl<UserStatus | ''>('', { nonNullable: true }),
         city_id: new FormControl<number | null>(null)
     });
     readonly statuses = computed(() => [
@@ -53,8 +56,8 @@ export class CustomersComponent {
         return m && this.rows().length ? (m.current_page - 1) * m.per_page + 1 : 0;
     });
     readonly rangeEnd = computed(() => this.rows().length ? this.rangeStart() + this.rows().length - 1 : 0);
-    readonly initials = customerInitials;
-    date(value: string): string { return customerDate(value, this.locale.language()); }
+    readonly initials = userInitials;
+    date(value: string): string { return userDate(value, this.locale.language()); }
     number(value: number): string { return new Intl.NumberFormat(this.locale.language()).format(value); }
 
     constructor() {
@@ -63,7 +66,7 @@ export class CustomersComponent {
                 const page = Number(params.get('page') ?? 1);
                 const status = params.get('status');
                 const cityId = Number(params.get('city_id'));
-                const filters: CustomerFilters = {
+                const filters: UserFilters = {
                     name: (params.get('name') ?? '').slice(0, 100),
                     mobile: (params.get('mobile') ?? '').slice(0, 20),
                     status: status === 'blocked' || status === 'unblocked' ? status : '',
@@ -73,9 +76,9 @@ export class CustomersComponent {
                 this.filters.set(filters);
                 this.form.reset({ name: filters.name, mobile: filters.mobile, status: filters.status, city_id: filters.city_id });
                 this.loading.set(true); this.error.set(''); this.rows.set([]); this.meta.set(null);
-                return this.api.list(filters).pipe(
+                return this.api.list(this.config.kind, filters).pipe(
                     map(result => ({ result, error: '' })),
-                    catchError(error => of({ result: null, error: customerError(error, this.locale) }))
+                    catchError(error => of({ result: null, error: userError(error, this.locale, this.copy.denied) }))
                 );
             }), takeUntilDestroyed()
         ).subscribe(({ result, error }) => {
@@ -84,7 +87,7 @@ export class CustomersComponent {
                 this.navigate({ ...this.filters(), page: Math.max(1, result.meta.last_page) }, true);
                 return;
             }
-            this.rows.set(result?.customers ?? []); this.meta.set(result?.meta ?? null);
+            this.rows.set(result?.users ?? []); this.meta.set(result?.meta ?? null);
             this.error.set(error); this.loading.set(false);
         });
     }
@@ -99,7 +102,7 @@ export class CustomersComponent {
         this.navigate({ ...this.filters(), page });
     }
     refresh(): void { this.reload.update(value => value + 1); }
-    private navigate(filters: CustomerFilters, replaceUrl = false): void {
+    private navigate(filters: UserFilters, replaceUrl = false): void {
         if (JSON.stringify(filters) === JSON.stringify(this.filters())) { this.refresh(); return; }
         void this.router.navigate([], { relativeTo: this.route, replaceUrl, queryParams: {
             name: filters.name || null, mobile: filters.mobile || null, status: filters.status || null,

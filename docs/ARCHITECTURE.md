@@ -41,7 +41,7 @@ Production also requires a web-server fallback to index.html, HTTPS, correct Lar
 - HTTP 401 from an authenticated API request clears the session and returns to login. Failed credentials, blocked access, throttling, connection failure and validation each have feedback.
 - Password recovery opens a truthful contact-administrator explanation. It does not send email/SMS, reset credentials, or invent a recovery endpoint.
 - Overview shows existing API counts and order-status summary. No fabricated chart series, revenue conversions, customer rows or operational links.
-- Customers is the first management feature, documented in `CUSTOMERS_STEP.md`. Other management lists/forms remain subsequent slices. First establish their actual filters, pagination, permissions and response formats.
+- Customers is the first management feature, documented in `CUSTOMERS_STEP.md`. Service providers now reuse the user directory/detail flow, with on-demand owned stores; read `PROVIDERS_STEP.md`. Other management lists/forms remain subsequent slices.
 - Framework/browser build tests do not prove live authenticated end-to-end access with a real retained admin account. That requires an owner-supplied login, without sharing passwords in chat.
 
 ## Verification commands
@@ -60,7 +60,7 @@ Browser tests use the locally installed Google Chrome channel, one worker, and a
 
 ## Customer feature
 
-Read `CUSTOMERS_STEP.md` before modifying the directory/details/status flow. `CustomerApi` reuses the shared client and maps the existing Laravel contract; it adds no backend behavior. Route query parameters retain applied filters and page during detail navigation. RxJS switchMap cancels superseded list/detail reads. Language changes refetch localized city data. A confirmed status write is single-flight and followed by a detail read; an uncertain response requires a fresh read before another write.
+Read `CUSTOMERS_STEP.md` and `PROVIDERS_STEP.md` before modifying the shared directory/details/status flow in `features/users`. `UserApi` reuses the shared client and maps the existing Laravel user contract. Explicit route configuration selects customer/provider copy and expected type. Route query parameters retain applied filters and page during detail navigation. RxJS switchMap cancels superseded list/detail reads. Language changes refetch localized user data. A confirmed status write is single-flight and followed by a detail read; an uncertain response requires a fresh read before another write.
 
 Customer status presentation is shared across list/detail; native PrimeNG controls, existing brand tokens, and typed translations are reused. Pagination uses a small labeled set of PrimeNG buttons because the backend fixes page size at 25; no page-size or sorting controls are implied. Dates explicitly use UTC. Generated initials do not imply an avatar resource exists.
 
@@ -73,3 +73,14 @@ for the current application/API base. Search and language changes are local; a p
 reload clears the catalog. Failed loads offer explicit retry and are not cached.
 Customer filters include city_id in the server request and navigation URL. No city
 catalog request is made just by entering the page, and no customer data is cached.
+
+## Provider stores
+
+`features/providers` contains the on-demand read-only store panel and API adapter.
+It reuses GET admin/stores with the validated owner_id filter added in Laravel.
+It retains the existing 15-store pagination and rejects rows belonging to another
+owner. Store reads remain separate from user reads and account-status writes.
+No stores are fetched merely by opening a provider directory or detail page.
+The shared city catalog is reused across customer and provider routes.
+`tests/providers.spec.ts` covers provider navigation/filters/refresh, confirmed
+actions, owner scoping, local city search, errors, and Arabic/mobile presentation.

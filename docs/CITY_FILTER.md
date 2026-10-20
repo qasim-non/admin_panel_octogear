@@ -1,4 +1,4 @@
-# Customer city filter
+# Customer and provider city filter
 
 ## User experience
 
@@ -57,9 +57,9 @@ GET /api/admin/users/customers?city_id=3&status=blocked&page=1 (use a real ID).
 
 - core/city-catalog.service.ts: typed bilingual catalog, successful cache and shared GET.
 - shared/city-select.component.ts: local search, localized labels and one loading/error state.
-- customers.component.ts/.html: form selection and URL retention.
-- customer-api.service.ts: selected ID in the server request.
-- customers.scss: four fields on wide screens, two on medium screens, one on mobile.
+- features/users/user-directory.component.ts/.html: shared customer/provider form selection and URL retention.
+- features/users/user-api.service.ts: selected ID in the server request.
+- features/users/users.scss: four fields on wide screens, two on medium screens, one on mobile.
 - locale.service.ts: Arabic/English feedback.
 
 The earlier five-minute paginated remote-search implementation is superseded by
