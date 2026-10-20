@@ -1,12 +1,12 @@
 # Step 2: customers
 
-This review covers one complete feature: the customer directory, customer details, and confirmed block/unblock. It uses the existing Laravel endpoints; **no Laravel source, routes, migrations, or retained records were changed** in this step.
+This review covers the customer directory, customer details, and confirmed block/unblock. The original slice used existing Laravel endpoints. Subsequent changes set 25 users per page and added city filtering; read `CITY_FILTER.md` for the current city contract and implementation walkthrough.
 
 ## Review the UI
 
 1. Run the API and `npm start` in the web project, then sign in with an existing administrator.
-2. Choose **Customers** in the sidebar. It shows the real server total, 15 records per page, full name/ID, mobile, city, joined date, status, and a details action.
-3. Search by name and/or phone, select account status, and select **Apply filters**. Name and phone combine with AND. **Clear filters** resets them. The list always searches the full server dataset.
+2. Choose **Customers** in the sidebar. It shows the real server total, 25 records per page, full name/ID, mobile, city, joined date, status, and a details action.
+3. Search by name and/or phone, select account status and/or city, and select **Apply filters**. All filters combine with AND. **Clear filters** resets them. The list always searches the full server dataset. Cities load only when browsing/searching the city field.
 4. Open a customer. Contact and account information are grouped separately from account-access actions. Order count comes from the existing response.
 5. Blocking and unblocking first open a dialog showing the customer's name, ID, phone, and the effect. Cancel sends no request. A confirmed write is followed by a fresh detail read. No optimistic status is shown.
 6. If a write cannot be confirmed, refresh the customer's details before another attempt. The application never automatically repeats the write.
@@ -30,7 +30,7 @@ Base URL remains the one public setting in `public/app-config.json`.
 
 | Action | Method and API-relative path | Inputs |
 | --- | --- | --- |
-| Customer directory | GET `admin/users/customers` | `name` (max 100), `mobile` (max 20), `status` (`blocked`/`unblocked`), `page` |
+| Customer directory | GET `admin/users/customers` | `name` (max 100), `mobile` (max 20), `status` (`blocked`/`unblocked`), optional positive existing `city_id`, `page` |
 | Customer detail | GET `admin/users/{id}` | ID |
 | Account status | PATCH `admin/users/{id}/status` | JSON `{ "status": "blocked" }` or `"unblocked"` |
 
@@ -79,7 +79,7 @@ There is currently no per-role user-management policy or capability flag. The fr
 
 Full-size `Customers.png` and `Customer details.png` were inspected. The original files remain unchanged.
 
-- City and joined-date filters are deferred: the backend does not currently implement them. City and joined date are still shown as data.
+- City filtering is implemented; joined-date filtering remains deferred because the backend does not implement it.
 - Email and customer pictures are absent from the resource/model contract. No invented email, stock photo, or upload action is shown. Initials are visual identifiers only.
 - The API has a single full name; the screen does not guess first/last name boundaries.
 - Status changes use a named confirmation action on detail rather than an instant row toggle.

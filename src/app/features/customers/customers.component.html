@@ -12,6 +12,7 @@
             <div class="filter-field"><label for="customer-name">{{ locale.t('nameSearch') }}</label><span class="search-input"><i class="pi pi-search" aria-hidden="true"></i><input pInputText id="customer-name" formControlName="name" maxlength="100" [placeholder]="locale.t('nameSearchPlaceholder')" autocomplete="off"/></span></div>
             <div class="filter-field"><label for="customer-mobile">{{ locale.t('phoneSearch') }}</label><input pInputText id="customer-mobile" formControlName="mobile" maxlength="20" inputmode="tel" [placeholder]="locale.t('phoneSearchPlaceholder')" autocomplete="off"/></div>
             <div class="filter-field"><label for="customer-status">{{ locale.t('accountStatus') }}</label><p-select inputId="customer-status" [ariaLabel]="locale.t('accountStatus')" formControlName="status" [options]="statuses()" optionLabel="label" optionValue="value" appendTo="body"/></div>
+            <div class="filter-field"><label for="customer-city">{{ locale.t('city') }}</label><app-city-select inputId="customer-city" [value]="form.controls.city_id.value" [knownCity]="knownCity()" (valueChange)="form.controls.city_id.setValue($event)"/></div>
         </div>
         <div class="filter-footer"><p>{{ locale.t('filterHint') }}</p><div class="filter-actions"><button pButton type="button" severity="secondary" [text]="true" [label]="locale.t('clearFilters')" (click)="clear()"></button><button pButton type="submit" icon="pi pi-filter" [label]="locale.t('applyFilters')" [disabled]="form.invalid"></button></div></div>
     </form>

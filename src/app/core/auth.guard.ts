@@ -2,5 +2,13 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { SessionService } from './session.service';
 
-export const authGuard: CanActivateFn = () => inject(SessionService).profile() ? true : inject(Router).createUrlTree(['/login']);
-export const guestGuard: CanActivateFn = () => inject(SessionService).profile() ? inject(Router).createUrlTree(['/overview']) : true;
+export const authGuard: CanActivateFn = () => {
+    const session = inject(SessionService);
+    const router = inject(Router);
+    return session.restoreFailed() ? false : session.profile() ? true : router.createUrlTree(['/login']);
+};
+export const guestGuard: CanActivateFn = () => {
+    const session = inject(SessionService);
+    const router = inject(Router);
+    return session.restoreFailed() ? false : session.profile() ? router.createUrlTree(['/overview']) : true;
+};

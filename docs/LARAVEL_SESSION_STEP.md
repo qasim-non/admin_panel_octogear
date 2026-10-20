@@ -11,12 +11,38 @@ The fix keeps both guards and their provider boundaries. Admin routes and shared
 1. Angular sends `POST /api/auth/admin/login` with email and password.
 2. Existing throttle middleware and `AdminLoginRequest` validate the request.
 3. Existing `AuthController::adminLogin` delegates to `AuthService::adminLogin`, which checks the credentials and blocked status and issues the token.
-4. Angular keeps the token in memory and sends `GET /api/admin/profile` with its Authorization bearer header.
+4. Angular keeps the token in memory and sends `GET /api/admin/profile` with its Authorization bearer header. After verification it saves the token and API base in tab-scoped sessionStorage for refresh recovery.
 5. `auth:sanctum,admin` authenticates it; `admin.active` verifies the admin model/status.
 6. The new thin `AdminProfileController::show` returns an `AdminProfileResource` inside the existing API success envelope. No service/repository is needed to serialize the already-authenticated identity.
 7. The resource exposes only employee_id, name, email, assigned_role and status, with `Cache-Control: no-store, private`.
 8. Angular opens the guarded Sakai shell and requests the existing `GET /api/admin/dashboard` summary.
-9. `POST /api/auth/logout` uses the existing device/token service to revoke the current token. Angular clears its in-memory identity after confirmed success.
+9. `POST /api/auth/logout` uses the existing device/token service to revoke the current token. Angular clears both memory and saved session after confirmed success.
+
+## Refresh recovery — 2026-10-20
+
+The original frontend intentionally stored its token only in memory, so refresh
+lost authentication even while Laravel's token remained valid. Startup now loads
+runtime configuration, reads the tab's saved session, and validates it once through
+the existing GET admin/profile before opening the requested route. Filters and
+detail URLs survive refresh. No login request, password storage, new token or
+Laravel authentication change is needed.
+
+The saved record contains only token and apiBaseUrl. A different API base or
+malformed record is discarded before any authenticated request. Profile 401/403
+clears the record and returns to sign-in. Connection/timeout/server failures show
+a retry screen while retaining the saved session; protected content is withheld.
+Successful logout and authenticated 401 responses remove the saved token.
+When browser storage is disabled, login still works in memory for that page.
+
+sessionStorage is scoped to the browser tab, survives reloads, and normally ends
+when the tab closes (browser session-restore behavior can retain it). It is not a
+remember-me feature. It is JavaScript-accessible, so it does not provide HttpOnly
+cookie protection against injected scripts. A future cookie-session change needs
+its own Laravel CSRF, CORS and deployment design; this slice retains the existing
+bearer contract and server expiry. Passwords and profile records are never saved.
+
+Review SessionService, the chained app initializer, route guards, AppComponent's
+retry screen and tests/auth.spec.ts. These replace older memory-only descriptions.
 
 ## Changed Laravel files
 

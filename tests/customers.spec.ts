@@ -13,17 +13,29 @@ const fixtures = () => names.map((full_name, index) => ({
     orders_count: index + 2, stores_count: 0
 }));
 const envelope = (data: unknown) => ({ success: true, message: 'OK', data });
+const cityFixtures = [
+    { id: 1, en: 'Riyadh', ar: 'الرياض' }, { id: 2, en: 'Jeddah', ar: 'جدة' }, { id: 3, en: 'Dammam', ar: 'الدمام' },
+    ...Array.from({ length: 50 }, (_, index) => ({ id: index + 4, en: `Test City ${index + 4}`, ar: `مدينة تجريبية ${index + 4}` }))
+];
 type Handler = (route: Route) => Promise<void> | void;
 
 async function setup(page: Page) {
     const state = { customers: fixtures(), calls: [] as URL[], patches: 0,
-        listStatus: 200, detailStatus: 200, patchStatus: 200, listOverride: null as Handler | null };
+        listStatus: 200, detailStatus: 200, patchStatus: 200, listOverride: null as Handler | null,
+        cityCalls: [] as URL[], cityStatus: 200, cityOverride: null as Handler | null };
     await page.route('**/api/**', async route => {
         const url = new URL(route.request().url());
         const path = url.pathname;
         if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204 });
         if (path.endsWith('/auth/admin/login')) return route.fulfill({ json: envelope({ token: 'test-customer-token' }) });
         expect(route.request().headers()['authorization']).toBe('Bearer test-customer-token');
+        if (path.endsWith('/admin/cities/options')) {
+            state.cityCalls.push(url);
+            if (state.cityOverride) return state.cityOverride(route);
+            if (state.cityStatus !== 200) return route.fulfill({ status: state.cityStatus, json: { success: false } });
+            expect(url.search).toBe('');
+            return route.fulfill({ json: envelope(cityFixtures.map(city => ({ id: city.id, name_en: city.en, name_ar: city.ar }))) });
+        }
         if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'employee', status: 'active' }) });
         if (path.endsWith('/admin/dashboard')) return route.fulfill({ json: envelope({
             users: { total: 27, customers: 27, providers: 0 }, stores: { total: 0, pending_requests: 0 },
@@ -36,7 +48,8 @@ async function setup(page: Page) {
             const q = url.searchParams;
             const rows = state.customers.filter(row => (!q.get('name') || row.full_name.toLowerCase().includes(q.get('name')!.toLowerCase()))
                 && (!q.get('mobile') || row.mobile.includes(q.get('mobile')!))
-                && (!q.get('status') || row.status === q.get('status')));
+                && (!q.get('status') || row.status === q.get('status'))
+                && (!q.get('city_id') || row.city.id === Number(q.get('city_id'))));
             const current = Number(q.get('page') ?? 1);
             const arabic = route.request().headers()['accept-language'] === 'ar';
             return route.fulfill({ json: { ...envelope(rows.slice((current - 1) * 25, current * 25).map(row => ({
@@ -246,4 +259,101 @@ test('desktop and Arabic mobile customer views stay usable without page overflow
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
     await page.screenshot({ path: 'test-results/customer-details-mobile-arabic.png', fullPage: true, animations: 'disabled' });
     expect(errors).toEqual([]);
+});
+
+test('city lookup is lazy, cached, searchable and retained through detail navigation', async ({ page }) => {
+    const state = await setup(page);
+    expect(state.cityCalls).toHaveLength(0);
+    await page.getByRole('button', { name: 'Browse cities', exact: true }).click();
+    await expect(page.getByRole('option', { name: 'Riyadh', exact: true })).toBeVisible();
+    expect(state.cityCalls).toHaveLength(1);
+    await page.getByRole('combobox', { name: 'City', exact: true }).press('Escape');
+    await page.getByRole('button', { name: 'Browse cities', exact: true }).click();
+    await expect(page.getByRole('option', { name: 'Riyadh', exact: true })).toBeVisible();
+    expect(state.cityCalls).toHaveLength(1);
+    await page.getByRole('combobox', { name: 'City', exact: true }).fill('الدمام');
+    await expect(page.getByRole('option', { name: 'Dammam', exact: true })).toBeVisible();
+    expect(state.cityCalls).toHaveLength(1);
+    await page.getByRole('option', { name: 'Dammam', exact: true }).click();
+    await page.getByLabel('Customer name', { exact: true }).fill('Omar');
+    await page.getByLabel('Phone number', { exact: true }).fill('103');
+    await page.getByRole('combobox', { name: 'Account status' }).click();
+    await page.getByRole('option', { name: 'Blocked', exact: true }).click();
+    await page.getByRole('button', { name: 'Apply filters' }).click();
+    await expect(page.locator('tbody tr')).toHaveCount(1);
+    expect(Object.fromEntries(state.calls.at(-1)!.searchParams)).toEqual({ page: '1', name: 'Omar', mobile: '103', status: 'blocked', city_id: '3' });
+    await page.getByRole('link', { name: 'Omar Al-Qahtani', exact: true }).click();
+    await page.getByRole('link', { name: 'Back to customers' }).click();
+    await expect(page.getByRole('combobox', { name: 'City', exact: true })).toHaveValue('Dammam');
+    await expect(page).toHaveURL(/city_id=3/);
+    expect(state.cityCalls).toHaveLength(1);
+    await page.reload();
+    await expect(page).toHaveURL(/city_id=3/);
+    await expect(page.getByRole('combobox', { name: 'City', exact: true })).toHaveValue('Dammam');
+    await expect(page.locator('tbody tr')).toHaveCount(1);
+    expect(state.cityCalls).toHaveLength(1);
+    await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+    await expect(page.getByRole('combobox', { name: 'City', exact: true })).toHaveValue('');
+    await expect(page.locator('tbody tr')).toHaveCount(25);
+    expect(state.calls.at(-1)!.searchParams.has('city_id')).toBe(false);
+});
+
+test('city chooser searches the complete catalog locally, retries failures, and supports empty results', async ({ page }) => {
+    const state = await setup(page);
+    state.cityStatus = 500;
+    await page.getByRole('button', { name: 'Browse cities', exact: true }).click();
+    await page.getByRole('button', { name: 'Retry cities', exact: true }).waitFor();
+    state.cityStatus = 200;
+    await page.getByRole('button', { name: 'Retry cities', exact: true }).click();
+    await expect(page.getByRole('option', { name: 'Riyadh', exact: true })).toBeVisible();
+    await page.getByRole('combobox', { name: 'City', exact: true }).fill('Test City 53');
+    await page.getByRole('option', { name: 'Test City 53', exact: true }).click();
+    await expect(page.getByRole('combobox', { name: 'City', exact: true })).toHaveValue('Test City 53');
+    expect(state.cityCalls).toHaveLength(2); // Failed download + explicit retry only.
+    await page.getByRole('button', { name: 'Apply filters' }).click();
+    await expect(page.getByRole('heading', { name: 'No matching customers' })).toBeVisible();
+    await page.getByRole('combobox', { name: 'City', exact: true }).fill('No such city');
+    await expect(page.getByText('No matching cities', { exact: true })).toBeVisible();
+    await page.getByRole('combobox', { name: 'City', exact: true }).fill('Riyadh');
+    await page.getByRole('option', { name: 'Riyadh', exact: true }).click();
+    await page.getByRole('button', { name: 'Apply filters' }).click();
+    await expect(page.locator('tbody tr')).toHaveCount(9);
+    expect(state.cityCalls).toHaveLength(2);
+});
+
+test('one city download and one loading message survive repeated typing and language changes', async ({ page }) => {
+    const state = await setup(page);
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => release = resolve);
+    state.cityOverride = async route => {
+        await gate;
+        await route.fulfill({ json: envelope(cityFixtures.map(city => ({ id: city.id, name_en: city.en, name_ar: city.ar }))) });
+    };
+    const city = page.getByRole('combobox', { name: 'City', exact: true });
+    await page.getByRole('button', { name: 'Browse cities', exact: true }).click();
+    await expect.poll(() => state.cityCalls.length).toBe(1);
+    await expect(page.getByText('Loading cities…', { exact: true })).toHaveCount(1);
+    await expect(page.getByText('Loading cities…', { exact: true })).toBeVisible();
+    await page.screenshot({ path: 'test-results/city-loading-single.png', fullPage: true });
+    await city.fill('Riy');
+    await city.fill('Jeddah');
+    expect(state.cityCalls).toHaveLength(1);
+    release();
+    await expect(page.getByRole('option', { name: 'Jeddah', exact: true })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Riyadh', exact: true })).toHaveCount(0);
+    await page.getByRole('option', { name: 'Jeddah', exact: true }).click();
+    await page.getByRole('button', { name: 'Apply filters' }).click();
+    await expect(page.locator('tbody tr')).toHaveCount(9);
+    state.cityOverride = null;
+    await page.getByRole('button', { name: 'العربية', exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await page.getByRole('button', { name: 'عرض المدن', exact: true }).click();
+    await page.getByRole('option', { name: 'الرياض', exact: true }).click();
+    await page.getByRole('button', { name: 'تطبيق الفلاتر', exact: true }).click();
+    await expect(page.getByRole('combobox', { name: 'المدينة', exact: true })).toHaveValue('الرياض');
+    await expect(page.locator('tbody tr')).toHaveCount(9);
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(state.cityCalls).toHaveLength(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+    await page.screenshot({ path: 'test-results/city-filter-arabic-mobile.png', fullPage: true, animations: 'disabled' });
 });

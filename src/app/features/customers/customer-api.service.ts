@@ -16,7 +16,7 @@ export interface Customer {
     city: { id: number; name: string } | null;
     created_at: string;
 }
-export interface CustomerFilters { name: string; mobile: string; status: CustomerStatus | ''; page: number; }
+export interface CustomerFilters { name: string; mobile: string; status: CustomerStatus | ''; city_id: number | null; page: number; }
 
 @Injectable({ providedIn: 'root' })
 export class CustomerApi {
@@ -26,6 +26,7 @@ export class CustomerApi {
         if (filters.name) params['name'] = filters.name;
         if (filters.mobile) params['mobile'] = filters.mobile;
         if (filters.status) params['status'] = filters.status;
+        if (filters.city_id) params['city_id'] = filters.city_id;
         return this.api.get<Customer[]>('admin/users/customers', params).pipe(map(response => {
             if (!response.success || !Array.isArray(response.data) || !response.meta) throw new Error('Invalid customer list response');
             return { customers: response.data, meta: response.meta };

@@ -216,3 +216,72 @@ cases against the existing unchanged production build and intercepted fixtures,
 including 25-row pagination, second-page remainder, filters, detail/back behavior,
 last-page reconciliation and Arabic/mobile layouts. No frontend application source
 changed, so no rebuild was needed. Retained accounts/data were not modified.
+
+### 2026-10-20: customer city filtering
+
+Added a searchable City filter to Customers using the existing PrimeNG/OctoGear
+styles. Read docs/CITY_FILTER.md for the request flow, cache policy and review order.
+City options load on interaction, search Arabic/English with a 300 ms debounce,
+page in batches of 50, and reuse recent results in a bounded five-minute memory
+cache. No eager catalog fetch, persistent customer cache or polling. Customer
+results remain 25 per page, and city_id persists through details/back/pagination.
+The existing admin UserIndexRequest validates city_id; AdminUserService applies
+it before pagination for users/customers/providers. Existing reference routes are
+reused. No migration, retained-data edits or production deployment.
+
+Verification: Angular typecheck and production build passed. All 23 Playwright
+authentication/customer tests passed against intercepted synthetic API fixtures,
+including lazy city loading, cache reuse, bilingual search, pagination, retry,
+combined filters, stale-request cancellation and detail/back retention. Desktop
+and Arabic mobile screenshots were visually reviewed. Focused Laravel checks
+passed (32 tests / 155 assertions), as did targeted Pint and PHP syntax checks.
+Full Laravel suite: 564 tests / 4,814 assertions; 561 passed and the same three
+previously documented failures remained: two AuthRateLimitTest OTP limits and
+the GeneralOrderDetailsTest quantity-field expectation. Those areas were not
+changed. Both project diffs passed whitespace checks.
+
+### 2026-10-20: refresh recovery and local city search
+
+Owner reported refresh returning to login, duplicate loading text, and unwanted
+city search requests. The original session was memory-only; the city picker
+rendered loading text in both its empty-message area and footer and used remote
+paginated search. This slice supersedes those earlier behaviors.
+
+- After successful profile verification, SessionService saves only the token and
+  API base in tab-scoped sessionStorage. Startup loads settings and verifies that
+  token once through the existing admin/profile before routing. Refresh retains
+  the current URL and filters. Logout/revoked/blocked sessions clear saved access.
+- Changed API bases and malformed saved records cannot forward a saved token.
+  Temporary verification failures preserve the record and show a retry view,
+  withholding protected content. Storage-disabled browsers keep memory-only login.
+  Laravel token expiry/auth behavior is unchanged. See LARAVEL_SESSION_STEP.md for
+  the storage scope and JavaScript-accessible bearer tradeoff.
+- Added GET admin/cities/options under the existing administrator middleware.
+  CityController reuses its catalog query and returns only id/name_en/name_ar for
+  all non-deleted cities. Public reference pagination remains unchanged.
+- CityCatalog shares one in-flight GET and caches the complete bilingual list in
+  application memory. The picker searches locally, including while downloading;
+  reopening and locale changes do not fetch cities. Reload clears the catalog;
+  the next picker interaction fetches it again. One loading/error message and an
+  explicit retry replace duplicate feedback and load-more controls.
+- Customer filtering remains server-side, 25 per page. No migration, account/data
+  mutation, dependency change, deployment or live retained-account login.
+
+Verification: Angular typecheck and production build passed. All 29 Playwright
+browser tests passed (synthetic intercepted API data), including saved-session
+restore/rejection/retry/API-boundary/storage-failure checks, filtered-page refresh,
+one delayed city GET/one loading message, local bilingual search across 53 cities,
+retry, details/back and Arabic/mobile layouts. Loading and Arabic mobile images
+were visually inspected. Focused Laravel checks passed: 22 tests / 238 assertions.
+Changed PHP syntax, targeted Pint and both diff whitespace checks passed.
+
+Full Laravel suite: 567 tests / 4,573 assertions, 562 passing, three failures and
+two errors. Failures are the previously documented two AuthRateLimitTest OTP
+expectations and GeneralOrderDetailsTest quantity-field expectation. The errors
+are demo image write/copy failures in GeneralOrderDetailsTest and
+ProviderDemoSeederTest, also reported in earlier API verification records.
+Those auth/order/image/seed implementations were not modified. The full suite is
+not green. PHP checks and browser tests ran outside the sandbox after its file
+access checks/preview startup prevented normal execution; tests used SQLite memory
+databases and intercepted browser APIs. The initial stalled test processes were
+stopped without touching the user's development server.

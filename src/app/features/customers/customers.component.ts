@@ -11,12 +11,13 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { PaginationMeta } from '../../core/api-client';
 import { LocaleService } from '../../core/locale.service';
+import { CitySelectComponent } from '../../shared/city-select.component';
 import { Customer, CustomerApi, CustomerFilters, CustomerStatus, customerDate, customerError, customerInitials } from './customer-api.service';
 import { CustomerStatusComponent } from './customer-status.component';
 
 @Component({
     selector: 'app-customers',
-    imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, MessageModule, SelectModule, SkeletonModule, TableModule, CustomerStatusComponent],
+    imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, MessageModule, SelectModule, SkeletonModule, TableModule, CustomerStatusComponent, CitySelectComponent],
     templateUrl: './customers.component.html', styleUrl: './customers.scss'
 })
 export class CustomersComponent {
@@ -29,21 +30,23 @@ export class CustomersComponent {
     readonly error = signal('');
     readonly rows = signal<Customer[]>([]);
     readonly meta = signal<PaginationMeta | null>(null);
-    readonly filters = signal<CustomerFilters>({ name: '', mobile: '', status: '', page: 1 });
+    readonly filters = signal<CustomerFilters>({ name: '', mobile: '', status: '', city_id: null, page: 1 });
     readonly form = new FormGroup({
         name: new FormControl('', { nonNullable: true, validators: Validators.maxLength(100) }),
         mobile: new FormControl('', { nonNullable: true, validators: Validators.maxLength(20) }),
-        status: new FormControl<CustomerStatus | ''>('', { nonNullable: true })
+        status: new FormControl<CustomerStatus | ''>('', { nonNullable: true }),
+        city_id: new FormControl<number | null>(null)
     });
     readonly statuses = computed(() => [
         { label: this.locale.t('allStatuses'), value: '' },
         { label: this.locale.t('unblocked'), value: 'unblocked' },
         { label: this.locale.t('blockedStatus'), value: 'blocked' }
     ]);
-    readonly filtered = computed(() => !!(this.filters().name || this.filters().mobile || this.filters().status));
+    readonly filtered = computed(() => !!(this.filters().name || this.filters().mobile || this.filters().status || this.filters().city_id));
+    readonly knownCity = computed(() => this.rows().find(row => row.city?.id === this.filters().city_id)?.city ?? null);
     readonly query = computed(() => {
         const f = this.filters();
-        return { name: f.name || null, mobile: f.mobile || null, status: f.status || null, page: f.page > 1 ? f.page : null };
+        return { name: f.name || null, mobile: f.mobile || null, status: f.status || null, city_id: f.city_id, page: f.page > 1 ? f.page : null };
     });
     readonly rangeStart = computed(() => {
         const m = this.meta();
@@ -59,14 +62,16 @@ export class CustomersComponent {
             switchMap(([params]) => {
                 const page = Number(params.get('page') ?? 1);
                 const status = params.get('status');
+                const cityId = Number(params.get('city_id'));
                 const filters: CustomerFilters = {
                     name: (params.get('name') ?? '').slice(0, 100),
                     mobile: (params.get('mobile') ?? '').slice(0, 20),
                     status: status === 'blocked' || status === 'unblocked' ? status : '',
+                    city_id: Number.isSafeInteger(cityId) && cityId > 0 ? cityId : null,
                     page: Number.isSafeInteger(page) && page > 0 ? page : 1
                 };
                 this.filters.set(filters);
-                this.form.reset({ name: filters.name, mobile: filters.mobile, status: filters.status });
+                this.form.reset({ name: filters.name, mobile: filters.mobile, status: filters.status, city_id: filters.city_id });
                 this.loading.set(true); this.error.set(''); this.rows.set([]); this.meta.set(null);
                 return this.api.list(filters).pipe(
                     map(result => ({ result, error: '' })),
@@ -86,9 +91,9 @@ export class CustomersComponent {
     apply(): void {
         if (this.form.invalid) return;
         const value = this.form.getRawValue();
-        this.navigate({ name: value.name.trim(), mobile: value.mobile.trim(), status: value.status, page: 1 });
+        this.navigate({ name: value.name.trim(), mobile: value.mobile.trim(), status: value.status, city_id: value.city_id, page: 1 });
     }
-    clear(): void { this.navigate({ name: '', mobile: '', status: '', page: 1 }); }
+    clear(): void { this.navigate({ name: '', mobile: '', status: '', city_id: null, page: 1 }); }
     changePage(page: number): void {
         if (this.loading() || page < 1 || page > (this.meta()?.last_page ?? 1)) return;
         this.navigate({ ...this.filters(), page });
@@ -98,6 +103,7 @@ export class CustomersComponent {
         if (JSON.stringify(filters) === JSON.stringify(this.filters())) { this.refresh(); return; }
         void this.router.navigate([], { relativeTo: this.route, replaceUrl, queryParams: {
             name: filters.name || null, mobile: filters.mobile || null, status: filters.status || null,
+            city_id: filters.city_id,
             page: filters.page > 1 ? filters.page : null
         } });
     }

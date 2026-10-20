@@ -11,7 +11,7 @@ Official references: https://sakai.primeng.org/documentation, https://angular.de
 - `src/app/core/app-settings.ts`: load and validate runtime public configuration before startup. Failure displays a recoverable setup error instead of choosing a different API.
 - `src/app/core/api-client.ts`: typed API envelope/pagination metadata and centralized GET/POST/PATCH URL construction; GET accepts query parameters.
 - `src/app/core/api.interceptor.ts`: Accept/locale/bearer headers only for the configured API URL boundary, request timeout, and authenticated 401 handling.
-- `src/app/core/session.service.ts`: in-memory token, current admin identity, login/logout and session generation. Credentials/tokens are not written to localStorage, sessionStorage, logs, or URLs.
+- `src/app/core/session.service.ts`: current admin identity, login/logout and session generation. The bearer token and matching API base are retained in tab-scoped sessionStorage after profile verification. Passwords/profile data are never persisted, and tokens never go into localStorage, logs, or URLs. Startup restores and validates the token before routing; see `LARAVEL_SESSION_STEP.md`.
 - `src/app/core/auth.guard.ts`: client navigation guard; Laravel remains authoritative for permission checks.
 - `src/app/core/locale.service.ts`: typed English/Arabic copy and document direction. Only language preference is stored in localStorage; preference storage is optional.
 - `src/app/core/octogear-preset.ts` and `src/styles.scss`: shared PrimeNG theme, typography, tokens, and shell/table presentation.
@@ -36,7 +36,7 @@ Production also requires a web-server fallback to index.html, HTTPS, correct Lar
 ## First-slice behavior and limits
 
 - Login -> token -> protected admin profile -> overview. The profile is required before entering the shell.
-- Tokens stay in memory. Refreshing or reopening the page returns to login; persistent sign-in and cookie sessions are not implemented. Server tokens follow Laravel's existing expiry rules, not a new browser expiry policy.
+- Refresh restores the tab's saved token only for its original API base, and GET admin/profile validates it before guarded navigation. Expired/revoked/blocked sessions are removed. Connection/server failures preserve the saved token and show a retry screen without protected content. Cookie sessions and persistent remember-me are not implemented. Server token expiry is unchanged.
 - Successful logout revokes the current server token. If logout cannot be confirmed, show an error and allow retry; do not claim server revocation succeeded.
 - HTTP 401 from an authenticated API request clears the session and returns to login. Failed credentials, blocked access, throttling, connection failure and validation each have feedback.
 - Password recovery opens a truthful contact-administrator explanation. It does not send email/SMS, reset credentials, or invent a recovery endpoint.
@@ -65,3 +65,11 @@ Read `CUSTOMERS_STEP.md` before modifying the directory/details/status flow. `Cu
 Customer status presentation is shared across list/detail; native PrimeNG controls, existing brand tokens, and typed translations are reused. Pagination uses a small labeled set of PrimeNG buttons because the backend fixes page size at 25; no page-size or sorting controls are implied. Dates explicitly use UTC. Generated initials do not imply an avatar resource exists.
 
 `tests/customers.spec.ts` covers directory filtering/pagination, detail navigation, status confirmation/cancellation/reconciliation, empty/error/denied/expired states, stale responses, promoted users, disappearing last pages, and English/Arabic responsive visuals.
+
+City filtering is described in `CITY_FILTER.md`. The reusable `CitySelectComponent`
+downloads the complete bilingual catalog from admin/cities/options on first interaction.
+`CityCatalog` shares one in-flight request and retains the successful list in memory
+for the current application/API base. Search and language changes are local; a page
+reload clears the catalog. Failed loads offer explicit retry and are not cached.
+Customer filters include city_id in the server request and navigation URL. No city
+catalog request is made just by entering the page, and no customer data is cached.

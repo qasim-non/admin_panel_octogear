@@ -64,9 +64,11 @@ test('login uses the contract, shows API data, and logout clears access', async 
     await expect(page.getByText('Test Administrator')).toBeVisible();
     await expect(page.locator('table')).toContainText('Completed');
     await expect(page.locator('.metric').first()).toContainText('31');
-    expect(await page.evaluate(() => JSON.stringify({...localStorage,...sessionStorage}))).not.toContain('test-only-token');
+    expect(await page.evaluate(() => JSON.stringify({...localStorage}))).not.toContain('test-only-token');
+    expect(await page.evaluate(() => sessionStorage.getItem('octogear.admin.session'))).toContain('test-only-token');
     await page.getByRole('button', {name: 'Sign out', exact: true}).click();
     await expect(page).toHaveURL('/login');
+    expect(await page.evaluate(() => sessionStorage.getItem('octogear.admin.session'))).toBeNull();
     await page.goto('/overview');
     await expect(page).toHaveURL('/login');
 });
@@ -157,4 +159,85 @@ test('desktop and mobile screenshots have no horizontal overflow', async ({page}
     await page.screenshot({path:'test-results/login-mobile.png',fullPage:true});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
     expect(consoleErrors).toEqual([]);
+});
+
+test('refresh verifies the saved session once and keeps the current URL', async ({page}) => {
+    await mockApi(page);
+    await login(page);
+    await expect(page).toHaveURL('/overview');
+    let profiles = 0;
+    let loginCalls = 0;
+    await page.route('**/api/admin/profile', route => { profiles++; return route.fulfill({json: envelope(profile)}); });
+    await page.route('**/api/auth/admin/login', route => { loginCalls++; return route.abort(); });
+    await page.reload();
+    await expect(page.getByText('Test Administrator')).toBeVisible();
+    await expect(page).toHaveURL('/overview');
+    expect(profiles).toBe(1);
+    expect(loginCalls).toBe(0);
+    expect(await page.evaluate(() => JSON.stringify({...sessionStorage}))).not.toContain('password');
+});
+
+test('revoked or blocked saved sessions are removed before rendering protected content', async ({page}) => {
+    for (const status of [401, 403]) {
+        await mockApi(page);
+        await login(page);
+        await expect(page).toHaveURL('/overview');
+        await page.route('**/api/admin/profile', route => route.fulfill({status, json: {success:false}}));
+        await page.reload();
+        await expect(page).toHaveURL('/login');
+        await expect(page.getByText('Test Administrator')).toHaveCount(0);
+        expect(await page.evaluate(() => sessionStorage.getItem('octogear.admin.session'))).toBeNull();
+        await page.unroute('**/api/admin/profile');
+    }
+});
+
+test('temporary session verification failure preserves login and retries without a password', async ({page}) => {
+    await mockApi(page);
+    await login(page);
+    await expect(page).toHaveURL('/overview');
+    await page.route('**/api/admin/profile', route => route.fulfill({status:503, json:{success:false}}));
+    await page.reload();
+    await expect(page.getByRole('heading', {name:'Unable to verify your session'})).toBeVisible();
+    await expect(page.getByText('Test Administrator')).toHaveCount(0);
+    expect(await page.evaluate(() => sessionStorage.getItem('octogear.admin.session'))).toContain('test-only-token');
+    await page.unroute('**/api/admin/profile');
+    await page.getByRole('button', {name:'Try again', exact:true}).click();
+    await expect(page).toHaveURL('/overview');
+    await expect(page.getByText('Test Administrator')).toBeVisible();
+});
+
+test('changing API configuration never sends an old saved token to the new server', async ({page}) => {
+    await mockApi(page);
+    await login(page);
+    await expect(page).toHaveURL('/overview');
+    await page.route('**/app-config.json', route => route.fulfill({json:{apiBaseUrl:'https://different.example.test/api'}}));
+    const requests: string[] = [];
+    await page.route('https://different.example.test/api/**', route => { requests.push(route.request().url()); return route.abort(); });
+    await page.reload();
+    await expect(page).toHaveURL('/login');
+    expect(requests).toEqual([]);
+    expect(await page.evaluate(() => sessionStorage.getItem('octogear.admin.session'))).toBeNull();
+});
+
+test('storage denial still permits an in-memory login', async ({page}) => {
+    await page.addInitScript(() => {
+        Storage.prototype.setItem = () => { throw new DOMException('Disabled', 'SecurityError'); };
+        Storage.prototype.getItem = () => { throw new DOMException('Disabled', 'SecurityError'); };
+        Storage.prototype.removeItem = () => { throw new DOMException('Disabled', 'SecurityError'); };
+    });
+    await mockApi(page);
+    await login(page);
+    await expect(page).toHaveURL('/overview');
+    await expect(page.getByText('Test Administrator')).toBeVisible();
+});
+
+test('malformed saved session is discarded without an API request', async ({page}) => {
+    await page.goto('/login');
+    await page.evaluate(() => sessionStorage.setItem('octogear.admin.session', '{broken'));
+    let requests = 0;
+    await page.route('**/api/**', route => { requests++; return route.abort(); });
+    await page.reload();
+    await expect(page.getByRole('button', {name:'Sign in', exact:true})).toBeVisible();
+    expect(requests).toBe(0);
+    expect(await page.evaluate(() => sessionStorage.getItem('octogear.admin.session'))).toBeNull();
 });

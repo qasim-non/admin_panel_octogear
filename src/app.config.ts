@@ -6,13 +6,18 @@ import { AppSettings } from './app/core/app-settings';
 import { apiInterceptor } from './app/core/api.interceptor';
 import { OctoGearPreset } from './app/core/octogear-preset';
 import { appRoutes } from './app.routes';
+import { SessionService } from './app/core/session.service';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         provideZonelessChangeDetection(),
         provideRouter(appRoutes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })),
         provideHttpClient(withFetch(), withInterceptors([apiInterceptor])),
-        provideAppInitializer(() => inject(AppSettings).load()),
+        provideAppInitializer(() => {
+            const settings = inject(AppSettings);
+            const session = inject(SessionService);
+            return settings.load().then(() => session.restore());
+        }),
         providePrimeNG({ theme: { preset: OctoGearPreset, options: { darkModeSelector: false } }, ripple: false })
     ]
 };
