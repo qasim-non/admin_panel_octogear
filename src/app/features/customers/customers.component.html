@@ -1,0 +1,57 @@
+<header class="page-heading">
+    <div><p class="eyebrow">{{ locale.t('workspace') }}</p><h1>{{ locale.t('customers') }}</h1><p>{{ locale.t('customersIntro') }}</p></div>
+    <button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button>
+</header>
+<section class="surface-panel directory-panel" aria-labelledby="directory-title">
+    <div class="section-heading">
+        <div class="directory-title"><span class="directory-icon"><i class="pi pi-users" aria-hidden="true"></i></span><div><h2 id="directory-title">{{ locale.t('customerDirectory') }}</h2><p>{{ locale.t('directoryIntro') }}</p></div></div>
+        @if (meta(); as pagination) { <span class="total-pill">{{ number(pagination.total) }} {{ locale.t('customersUnit') }}</span> }
+    </div>
+    <form class="filter-form" [formGroup]="form" (ngSubmit)="apply()">
+        <div class="filter-fields">
+            <div class="filter-field"><label for="customer-name">{{ locale.t('nameSearch') }}</label><span class="search-input"><i class="pi pi-search" aria-hidden="true"></i><input pInputText id="customer-name" formControlName="name" maxlength="100" [placeholder]="locale.t('nameSearchPlaceholder')" autocomplete="off"/></span></div>
+            <div class="filter-field"><label for="customer-mobile">{{ locale.t('phoneSearch') }}</label><input pInputText id="customer-mobile" formControlName="mobile" maxlength="20" inputmode="tel" [placeholder]="locale.t('phoneSearchPlaceholder')" autocomplete="off"/></div>
+            <div class="filter-field"><label for="customer-status">{{ locale.t('accountStatus') }}</label><p-select inputId="customer-status" [ariaLabel]="locale.t('accountStatus')" formControlName="status" [options]="statuses()" optionLabel="label" optionValue="value" appendTo="body"/></div>
+        </div>
+        <div class="filter-footer"><p>{{ locale.t('filterHint') }}</p><div class="filter-actions"><button pButton type="button" severity="secondary" [text]="true" [label]="locale.t('clearFilters')" (click)="clear()"></button><button pButton type="submit" icon="pi pi-filter" [label]="locale.t('applyFilters')" [disabled]="form.invalid"></button></div></div>
+    </form>
+    <div class="results-heading"><span>{{ locale.t(filtered() ? 'filteredResults' : 'customerDirectory') }}</span><span>{{ locale.t('newestFirst') }}</span></div>
+    @if (error()) {
+        <div class="error-panel results-error"><p-message severity="error">{{ error() }}</p-message><button pButton [label]="locale.t('retry')" (click)="refresh()"></button></div>
+    } @else if (loading()) {
+        <div class="list-loading" role="status" aria-live="polite" aria-busy="true"><span class="sr-only">{{ locale.t('loadingCustomers') }}</span>
+            @for (row of [1,2,3,4,5]; track row) { <div class="skeleton-row"><p-skeleton shape="circle" size="2.8rem"/><p-skeleton width="45%" height="1.1rem"/><p-skeleton width="20%" height="1.1rem"/></div> }
+        </div>
+    } @else if (rows().length === 0) {
+        <div class="empty-state"><span class="empty-icon"><i class="pi pi-users" aria-hidden="true"></i></span><h3>{{ locale.t(filtered() ? 'noMatches' : 'noCustomers') }}</h3><p>{{ locale.t(filtered() ? 'noMatchesBody' : 'noCustomersBody') }}</p>
+            @if (filtered()) { <button pButton severity="secondary" [outlined]="true" [label]="locale.t('clearFilters')" (click)="clear()"></button> }
+        </div>
+    } @else {
+        <p class="table-scroll-hint"><i class="pi pi-arrows-h" aria-hidden="true"></i>{{ locale.t('scrollColumns') }}</p>
+        <div class="table-scroll" role="region" tabindex="0" [attr.aria-label]="locale.t('customerListRegion')">
+            <p-table [value]="rows()" dataKey="id" [tableStyle]="{'min-width': '860px'}">
+                <ng-template #header><tr><th scope="col">{{ locale.t('customer') }}</th><th scope="col">{{ locale.t('phoneSearch') }}</th><th scope="col">{{ locale.t('city') }}</th><th scope="col">{{ locale.t('joinedUtc') }}</th><th scope="col">{{ locale.t('accountStatus') }}</th><th scope="col"><span class="sr-only">{{ locale.t('actions') }}</span></th></tr></ng-template>
+                <ng-template #body let-customer><tr>
+                    <td><div class="customer-identity"><span class="customer-avatar" aria-hidden="true">{{ initials(customer.full_name) }}</span><div><a class="customer-name" [routerLink]="['/customers', customer.id]" [queryParams]="query()">{{ customer.full_name }}</a><span class="customer-reference">#{{ customer.id }}</span></div></div></td>
+                    <td><bdi class="phone" dir="ltr">{{ customer.mobile }}</bdi></td>
+                    <td>{{ customer.city?.name ?? locale.t('notProvided') }}</td>
+                    <td class="date-cell">{{ date(customer.created_at) }}</td>
+                    <td><app-customer-status [status]="customer.status"/></td>
+                    <td class="row-action"><a pButton severity="secondary" [text]="true" [routerLink]="['/customers', customer.id]" [queryParams]="query()" [attr.aria-label]="locale.t('viewDetails') + ': ' + customer.full_name"><span>{{ locale.t('viewDetails') }}</span><i [class]="locale.language() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'" aria-hidden="true"></i></a></td>
+                </tr></ng-template>
+            </p-table>
+        </div>
+    }
+    @if (meta(); as pagination) {
+        <footer class="table-footer">
+            <p role="status" aria-live="polite">{{ locale.t('showing') }} <strong>{{ number(rangeStart()) }}–{{ number(rangeEnd()) }}</strong> {{ locale.t('of') }} <strong>{{ number(pagination.total) }}</strong> {{ locale.t('customersUnit') }}</p>
+            <nav class="pagination" [attr.aria-label]="locale.t('customerDirectory')">
+                <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'" [attr.aria-label]="locale.t('firstPage')" [disabled]="pagination.current_page <= 1" (click)="changePage(1)"></button>
+                <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-right' : 'pi pi-angle-left'" [attr.aria-label]="locale.t('previousPage')" [disabled]="pagination.current_page <= 1" (click)="changePage(pagination.current_page - 1)"></button>
+                <span class="page-current" aria-current="page">{{ locale.t('pageNumber') }} {{ number(pagination.current_page) }} / {{ number(pagination.last_page) }}</span>
+                <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-left' : 'pi pi-angle-right'" [attr.aria-label]="locale.t('nextPage')" [disabled]="pagination.current_page >= pagination.last_page" (click)="changePage(pagination.current_page + 1)"></button>
+                <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-double-left' : 'pi pi-angle-double-right'" [attr.aria-label]="locale.t('lastPage')" [disabled]="pagination.current_page >= pagination.last_page" (click)="changePage(pagination.last_page)"></button>
+            </nav>
+        </footer>
+    }
+</section>

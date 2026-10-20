@@ -4,7 +4,8 @@ import { LocaleService } from '../../core/locale.service';
 
 @Component({
  selector: 'app-menu', imports: [RouterLink, RouterLinkActive],
- template: `<nav id="main-navigation" [attr.aria-label]="locale.t('workspace')"><p class="nav-label">{{ locale.t('workspace') }}</p><ul class="octogear-menu"><li><a routerLink="/overview" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-th-large" aria-hidden="true"></i>{{ locale.t('overview') }}</a></li></ul></nav>`
+ styles: [':host { display: block; }'],
+ template: `<nav id="main-navigation" [attr.aria-label]="locale.t('workspace')"><p class="nav-label">{{ locale.t('workspace') }}</p><ul class="octogear-menu"><li><a routerLink="/overview" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-th-large" aria-hidden="true"></i>{{ locale.t('overview') }}</a></li><li><a routerLink="/customers" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-users" aria-hidden="true"></i>{{ locale.t('customers') }}</a></li></ul></nav>`
 })
 export class AppMenu { readonly locale = inject(LocaleService); }
 

@@ -22,5 +22,7 @@ const server = createServer((request, response) => {
     if (request.method === 'HEAD') { response.end(); return; }
     createReadStream(file).on('error', () => response.destroy()).pipe(response);
 });
-server.listen(4200, '127.0.0.1', () => console.log('OctoGear preview: http://127.0.0.1:4200'));
+const port = Number(process.env.OCTOGEAR_PREVIEW_PORT || 4200);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid preview port.');
+server.listen(port, '127.0.0.1', () => console.log(`OctoGear preview: http://127.0.0.1:${port}`));
 for (const signal of ['SIGINT','SIGTERM']) process.on(signal, () => server.close(() => process.exit(0)));

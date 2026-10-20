@@ -9,7 +9,7 @@ Official references: https://sakai.primeng.org/documentation, https://angular.de
 ## Responsibility boundaries
 
 - `src/app/core/app-settings.ts`: load and validate runtime public configuration before startup. Failure displays a recoverable setup error instead of choosing a different API.
-- `src/app/core/api-client.ts`: typed API envelope and centralized GET/POST URL construction.
+- `src/app/core/api-client.ts`: typed API envelope/pagination metadata and centralized GET/POST/PATCH URL construction; GET accepts query parameters.
 - `src/app/core/api.interceptor.ts`: Accept/locale/bearer headers only for the configured API URL boundary, request timeout, and authenticated 401 handling.
 - `src/app/core/session.service.ts`: in-memory token, current admin identity, login/logout and session generation. Credentials/tokens are not written to localStorage, sessionStorage, logs, or URLs.
 - `src/app/core/auth.guard.ts`: client navigation guard; Laravel remains authoritative for permission checks.
@@ -41,7 +41,7 @@ Production also requires a web-server fallback to index.html, HTTPS, correct Lar
 - HTTP 401 from an authenticated API request clears the session and returns to login. Failed credentials, blocked access, throttling, connection failure and validation each have feedback.
 - Password recovery opens a truthful contact-administrator explanation. It does not send email/SMS, reset credentials, or invent a recovery endpoint.
 - Overview shows existing API counts and order-status summary. No fabricated chart series, revenue conversions, customer rows or operational links.
-- All other full management lists/forms remain subsequent slices. First establish their actual filters, pagination, permissions and response formats.
+- Customers is the first management feature, documented in `CUSTOMERS_STEP.md`. Other management lists/forms remain subsequent slices. First establish their actual filters, pagination, permissions and response formats.
 - Framework/browser build tests do not prove live authenticated end-to-end access with a real retained admin account. That requires an owner-supplied login, without sharing passwords in chat.
 
 ## Verification commands
@@ -55,4 +55,13 @@ npm run build
 npm test
 ```
 
-Browser tests use the locally installed Google Chrome channel, one worker, and a lightweight local preview of the production build on 127.0.0.1:4200. Run the build before tests. Tests intercept API responses and do not log in to the retained Laravel database. The first simultaneous build/dev-server verification hit a timeout on a low-memory host; a sequential two-worker production build and static preview passed. Set `$env:NG_BUILD_MAX_WORKERS='2'` before builds on this host. A different local browser can be selected in playwright.config.ts. Do not run these browser tests against a production API or remove their request mocks.
+Browser tests use the locally installed Google Chrome channel, one worker, and a lightweight local preview of the production build on 127.0.0.1:4201 (override with `OCTOGEAR_TEST_PORT`). The regular development/preview default remains 4200. Run the build before tests. Tests intercept API responses and do not log in to the retained Laravel database. The first simultaneous build/dev-server verification hit a timeout on a low-memory host; a sequential two-worker production build and static preview passed. Set `$env:NG_BUILD_MAX_WORKERS='2'` before builds on this host. A different local browser can be selected in playwright.config.ts. Do not run these browser tests against a production API or remove their request mocks.
+
+
+## Customer feature
+
+Read `CUSTOMERS_STEP.md` before modifying the directory/details/status flow. `CustomerApi` reuses the shared client and maps the existing Laravel contract; it adds no backend behavior. Route query parameters retain applied filters and page during detail navigation. RxJS switchMap cancels superseded list/detail reads. Language changes refetch localized city data. A confirmed status write is single-flight and followed by a detail read; an uncertain response requires a fresh read before another write.
+
+Customer status presentation is shared across list/detail; native PrimeNG controls, existing brand tokens, and typed translations are reused. Pagination uses a small labeled set of PrimeNG buttons because the backend fixes page size at 25; no page-size or sorting controls are implied. Dates explicitly use UTC. Generated initials do not imply an avatar resource exists.
+
+`tests/customers.spec.ts` covers directory filtering/pagination, detail navigation, status confirmation/cancellation/reconciliation, empty/error/denied/expired states, stale responses, promoted users, disappearing last pages, and English/Arabic responsive visuals.

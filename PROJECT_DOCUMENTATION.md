@@ -163,3 +163,56 @@ Next review: approve the first implemented slice visually and review the small d
 The verified source, exact dependencies and production build are installed in the approved web project directory. A final local production-preview smoke check returned HTTP 200 for /login and the original logo; app-config.json returned http://127.0.0.1:8000/api. The temporary preview process was stopped.
 
 Unrelated provider/chat edits appeared in the API repository after the full regression run (provider order controller, conversation policy, provider-offer repository and provider-chat tests). They were preserved. The 551-test full-suite result is evidence from the auth-slice run, not a claim that the latest concurrently edited API tree has been fully retested. Admin session tests were checked separately again afterward.
+
+### 2026-10-20: slice 2 — customer directory and details
+
+Read `docs/CUSTOMERS_STEP.md` with this document when reviewing/extending the customer feature. The scope is one complete management area, not the remaining admin modules.
+
+Implemented:
+
+- Customers navigation and guarded lazy list/detail routes.
+- PrimeNG directory table with actual server total, fixed 15-row pages, name/mobile AND filtering, account-status filter, explicit Apply/Clear actions, and retained URL filters/page on detail/back navigation.
+- Customer identity, mobile, localized city, joined date, status, and detail links. Dates explicitly use UTC. No page-only fake search or unsupported sorting/page-size controls.
+- Customer details with contact/account sections and the API order count, plus confirmed block/unblock and a fresh read after a successful write.
+- Uncertain status responses require refresh before another write; writes are never automatically repeated. Missing/promoted customers expose no customer status action.
+- English/Arabic, responsive layouts, in-surface horizontal table scrolling with a visible mobile hint, enlarged pagination targets, skeletons, distinct empty/no-match/error/denied/session-expiry states.
+- Existing sidebar inline menu host corrected to block layout after browser tests showed it intercepting navigation clicks. Status selector has an explicit accessible name.
+- Central ApiClient extended with query parameters, PATCH, and pagination typing; the one-place API URL configuration and in-memory session rules remain unchanged.
+- New `docs/CUSTOMERS_STEP.md` explains the screen, contract, Laravel flow, review order, test commands, design decisions, and remaining gaps. README and architecture guide updated.
+
+Existing API used: GET `admin/users/customers`, GET `admin/users/{id}`, PATCH `admin/users/{id}/status`. **No Laravel files, endpoints, migrations, or retained records changed.** The API repository's pre-existing README edit was preserved. Existing admin middleware/role behavior remains authoritative.
+
+Wireframe gaps deliberately deferred: city/date filtering needs API support; email/profile photos and split first/last names are absent from the current contract. Initials are generated for presentation. Suggested later addition: an audited status-change history with administrator, timestamp, and reason; this is not implemented or implied by the current action.
+
+Verification:
+
+- `npm run typecheck`: passed.
+- `npm run build` with two build workers: passed.
+- Final `npm test`: **20 passed** (11 login/config/session/overview regressions + 9 customer integration/visual tests), using production build and intercepted synthetic HTTP responses.
+- Laravel existing `AdminUserManagementTest|AdminSessionTest`: **18 tests / 64 assertions passed**, isolated SQLite `:memory:`, array cache/session. Full backend suite was not rerun because this slice makes no backend changes; the older full-suite record above remains historical.
+- Desktop English/Arabic directory, desktop details/confirmation, mobile Arabic directory/details visually inspected. No page-level horizontal overflow at 390px. Screenshot records are synthetic test fixtures, not live accounts.
+- Existing local development server on 4200 returned HTTP 200 for `/login`; a preview-opening request was queued by the app. Browser tests use a separate 4201 server. A stalled test-owned Chrome shutdown required terminating that identified test browser after assertions completed; the test run then exited successfully. The user's development server was preserved.
+- `git diff --check`: passed. No dependency/lockfile changes, production deployment, live account login, or retained customer mutation.
+
+Review this slice before starting a separate management area. Providers/store-request review is a logical next feature; missing customer city/date filters can instead be a small separately reviewed Laravel extension.
+
+
+### 2026-10-20: admin user page size
+
+Owner requested only 25 users per request. Changed the existing shared
+AdminUserService paginator from 15 to 25 for admin users/customers/providers.
+Angular already reads meta.per_page; no application UI code changed. Filters,
+detail/status requests, ordering, authorization and routes are unchanged. City
+filtering, browser caching, page-size selection and infinite scrolling remain
+deferred. Updated the customer guide and existing API/browser test fixtures to
+cover 25 rows on page one and the remainder on page two. No migration needed.
+
+Verification: affected Laravel tests passed (18 tests / 70 assertions); PHP syntax
+and targeted Pint passed. Full backend suite: 556 tests / 4,726 assertions,
+553 passed and three failures matching the previously documented two OTP
+rate-limit expectations and general-order quantity-field expectation. Those
+areas were not changed. Customer browser test assertions passed in all nine
+cases against the existing unchanged production build and intercepted fixtures,
+including 25-row pagination, second-page remainder, filters, detail/back behavior,
+last-page reconciliation and Arabic/mobile layouts. No frontend application source
+changed, so no rebuild was needed. Retained accounts/data were not modified.
