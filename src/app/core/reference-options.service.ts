@@ -1,14 +1,18 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
 import { ApiClient } from './api-client';
 import { AppSettings } from './app-settings';
 
 export interface ReferenceOption { id: number; name: string; }
 export interface BilingualReference { id: number; name_en: string; name_ar: string; }
-type CatalogPath = 'admin/cities/options' | 'admin/car-companies/options';
+type CatalogPath = 'admin/cities/options' | 'admin/car-companies/options' | 'admin/catalog-countries/options';
 
 @Injectable({ providedIn: 'root' })
 export class ReferenceOptions {
+    readonly revision = signal(0);
+    invalidate(path: CatalogPath): void {
+        this.values.delete(path); this.pending.delete(path); this.revision.update(n => n + 1);
+    }
     private readonly api = inject(ApiClient);
     private readonly settings = inject(AppSettings);
     private base = '';
@@ -29,7 +33,7 @@ export class ReferenceOptions {
                 }
                 return response.data;
             }),
-            tap(items => { if (this.base === base) this.values.set(path, items); }),
+            tap(items => { if (this.base === base && this.pending.get(path) === request) this.values.set(path, items); }),
             finalize(() => { if (this.pending.get(path) === request) this.pending.delete(path); }),
             // Small, complete reference lists share one in-flight read and search locally.
             shareReplay({ bufferSize: 1, refCount: false })

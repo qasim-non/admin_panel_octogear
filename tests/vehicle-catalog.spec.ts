@@ -40,12 +40,12 @@ async function setup(page: Page, start = '/car-companies') {
             const arabic = request.headers()['accept-language'] === 'ar', q = url.searchParams, search = (q.get('search') || '').toLowerCase();
             const companyData = (id: number) => {
                 const company = state.companies.find(c => c.id === id)!;
-                return { id, name: arabic ? company.name_ar : company.name_en, country: { id: 1, name: arabic ? company.country_ar : company.country_en } };
+                return { id, name_en: company.name_en, name_ar: company.name_ar, country_id: 1, version: 'a'.repeat(64), name: arabic ? company.name_ar : company.name_en, country: { id: 1, name: arabic ? company.country_ar : company.country_en } };
             };
             const rows = path.endsWith('/car-companies')
                 ? state.companies.filter(c => `${c.name_en} ${c.name_ar}`.toLowerCase().includes(search)).map(c => ({ ...companyData(c.id), models_count: state.models.filter(m => m.company_id === c.id).length }))
                 : state.models.filter(m => (!q.get('company_id') || m.company_id === Number(q.get('company_id'))) && `${m.name_en} ${m.name_ar}`.toLowerCase().includes(search))
-                    .map(m => ({ id: m.id, name: arabic ? m.name_ar : m.name_en, company: companyData(m.company_id) }));
+                    .map(m => ({ id: m.id, name_en: m.name_en, name_ar: m.name_ar, car_company_id: m.company_id, version: 'a'.repeat(64), name: arabic ? m.name_ar : m.name_en, company: companyData(m.company_id) }));
             if (state.delay && search === state.delay) await new Promise(resolve => setTimeout(resolve, 700));
             const current = Number(q.get('page') || 1);
             return route.fulfill({ json: { success: true, data: rows.slice((current - 1) * 25, current * 25), meta: { current_page: current, last_page: Math.max(1, Math.ceil(rows.length / 25)), per_page: 25, total: rows.length } } });

@@ -557,3 +557,64 @@ those checks completed outside the sandbox with the same isolated configuration.
 No retained database, catalog data, account, seeder, migration or production host
 was changed. Live authenticated browser-to-Laravel verification remains outstanding.
 The README's pre-existing encoding tail was preserved.
+
+### 2026-10-21: slice 8 follow-up — Company and model-name CRUD
+
+The owner explicitly requested add, edit and delete after the read-only catalog
+slice. Both pages now have Add and row-level Edit/Delete controls, shared bilingual
+PrimeNG forms, named delete confirmations, and translated English/Arabic/RTL
+feedback. Existing model company assignments stay fixed; editing changes the names.
+Company origin is optional. Form data comes from directory rows without another
+GET. Successful writes refresh the current filtered page and recover a removed
+last page. 422 errors stay editable; uncertain writes and conflicts require a
+fresh list before resubmission. Writes are single-flight and never auto-retried.
+
+Laravel adds POST/PATCH/DELETE routes with the existing allowed-admin policy,
+localized Form Requests, transactional AdminVehicleCatalogService, prepared
+resources and version hashes of editable fields. Duplicate names are rejected
+within the appropriate company/model scope. The singleton vehicle_catalog_locks
+row serializes admin catalog writes and prevents competing admin creates from
+passing duplicate checks together. The migration is additive and leaves catalog
+rows intact. Future writers must reuse the service/lock; seeds/imports should not
+run alongside live catalog writes. Production MySQL load testing is not claimed.
+
+Deletion uses Eloquent soft deletes and rejects records referenced by current
+models, vehicles, stock, store associations/requests or orders, including retained
+archived usage. Model-year variants, private media and historical order snapshots
+are preserved. Sub-admin access changes and variant management remain deferred.
+
+Country choices reuse the company selector and small shared reference cache.
+Options load on first interaction, with local bilingual search. Company writes
+invalidate options, including uncertain writes; stale requests cannot repopulate
+that cache. API base configuration remains in public/app-config.json.
+
+Read docs/VEHICLE_CATALOG_STEP.md review steps 5–6 for the route → policy → request
+→ controller → service/query → resource walkthrough, payloads, lock order,
+migration command and web recovery behavior. README and architecture are updated.
+
+Local setup: verified API environment local, MySQL host 127.0.0.1, then applied
+only 2026_10_21_190000_create_vehicle_catalog_locks_table successfully. No seed,
+reset, business-record mutation, account login or production deployment. Unrelated
+support-chat files and pending migration were preserved.
+
+Verification: final Angular typecheck and production build passed. The catalog,
+reference and city API set passed 27 tests / 426 assertions on isolated SQLite.
+Changed PHP syntax, targeted Pint and API diff whitespace checks passed. The full
+backend run completed 631 tests / 17,198 assertions: 627 passed, four failed.
+Three are the previously documented two AuthRateLimitTest expectations and
+GeneralOrderDetailsTest quantity expectation. The fourth was SupportChatTest's
+admin socket setup: ChatRealtimeService::configuration expected User but received
+Admin. Support chat was being changed concurrently outside this catalog task;
+that failure was not changed or hidden here. The full run was not green.
+
+Windows sandbox filesystem access stalled the first Angular build; only that
+task-owned build was stopped and rerun outside the sandbox. The user's development
+server stayed running. Browser verification uses intercepted synthetic APIs on
+preview port 4202; live retained-account browser/API verification is not claimed.
+
+Final browser verification: all 79 tests passed on the final production build,
+including the 10 catalog checks and the unchanged session/city/language/customer/
+provider/store/order/payment flows. English desktop and Arabic mobile dialog
+screenshots were inspected after animations completed; forms fit the viewport.
+Web diff whitespace checks passed. Laravel route listing confirmed all six CRUD
+routes and the new country-options route are registered locally.

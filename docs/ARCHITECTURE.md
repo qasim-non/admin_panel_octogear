@@ -9,7 +9,7 @@ Official references: https://sakai.primeng.org/documentation, https://angular.de
 ## Responsibility boundaries
 
 - `src/app/core/app-settings.ts`: load and validate runtime public configuration before startup. Failure displays a recoverable setup error instead of choosing a different API.
-- `src/app/core/api-client.ts`: typed API envelope/pagination metadata and centralized GET/POST/PATCH URL construction; GET accepts query parameters. Protected image reads use the same configured API boundary with Blob responses.
+- `src/app/core/api-client.ts`: typed API envelope/pagination metadata and centralized GET/POST/PATCH/DELETE URL construction; GET accepts query parameters. Protected image reads use the same configured API boundary with Blob responses.
 - `src/app/core/api.interceptor.ts`: Accept/locale/bearer headers only for the configured API URL boundary, request timeout, and authenticated 401 handling.
 - `src/app/core/session.service.ts`: current admin identity, login/logout and session generation. The bearer token and matching API base are retained in tab-scoped sessionStorage after profile verification. Passwords/profile data are never persisted, and tokens never go into localStorage, logs, or URLs. Startup restores and validates the token before routing; see `LARAVEL_SESSION_STEP.md`.
 - `src/app/core/auth.guard.ts`: client navigation guard; Laravel remains authoritative for permission checks.
@@ -120,7 +120,12 @@ Both pages use 25-row server pagination, URL filters and cancellable reads.
 ReferenceOptions owns complete small bilingual option caches, keyed by catalog
 path and API base; CityCatalog delegates to it while retaining its public API.
 CompanySelect loads on opening and searches locally using PrimeNG Select.
-No catalog writes or revised sub-admin rules are introduced.
+CatalogEditorComponent shares bilingual create/edit forms and delete confirmation.
+Writes use version checks, dependency guards and soft deletion in Laravel. Company
+writes invalidate shared option caches; uncertain results require list refresh
+before another attempt. Country options reuse the lazy selector/cache. See the
+feature guide for the required additive lock-table migration and review order.
+Revised sub-admin rules remain deferred.
 
 ## Orders and account language
 

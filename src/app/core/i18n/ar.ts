@@ -1,6 +1,16 @@
 import type { TextKey } from './en';
 
 export const ar: Record<TextKey, string> = {
+    addCompany: 'إضافة شركة', addModel: 'إضافة موديل', catalogEdit: 'تعديل', catalogDelete: 'حذف', catalogSave: 'حفظ التغييرات',
+    catalogEditTitle: 'تعديل سجل الدليل', catalogDeleteTitle: 'حذف سجل الدليل؟',
+    catalogNameEn: 'الاسم بالإنجليزية', catalogNameAr: 'الاسم بالعربية', catalogOptional: '(اختياري)',
+    catalogNamesHint: 'أدخل الاسمين لعرض الدليل بشكل صحيح بالعربية والإنجليزية.',
+    catalogCompanyFixed: 'تبقى الشركة ثابتة للحفاظ على ارتباط السيارات الموجودة بها.',
+    catalogNameRequired: 'أدخل اسماً يتكون من حرف واحد إلى 100 حرف.', catalogCheckFields: 'تحقق من الحقول المحددة.',
+    catalogDeleteHint: 'سيُزال السجل من الدليل المتاح. لا يمكن حذف السجلات المرتبطة بسيارات أو طلبات شراء أو متاجر أو طلبات تسجيل. احذف موديلات الشركة غير المستخدمة أولاً.',
+    catalogSaved: 'تم حفظ تغييرات الدليل.', catalogDeleted: 'تم حذف سجل الدليل.',
+    catalogUncertain: 'تعذر تأكيد النتيجة. أغلق النافذة وتحقق من القائمة المحدّثة قبل المحاولة مرة أخرى.',
+    chooseCompany: 'اختر شركة', searchCountries: 'البحث عن دولة', loadingReference: 'جارٍ تحميل الدول…', referenceError: 'تعذر تحميل الدول.', noReferenceOptions: 'لا توجد دول مطابقة',
     carCompanies: 'شركات السيارات', carModels: 'موديلات السيارات', vehicleCatalog: 'دليل السيارات',
     companiesIntro: 'تصفح شركات السيارات واستعرض موديلاتها في دليل OctoGear.',
     modelsIntro: 'ابحث عن موديلات السيارات لدى جميع الشركات أو اختر شركة محددة.',

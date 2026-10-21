@@ -12,10 +12,11 @@ import { TableModule } from 'primeng/table';
 import { errorMessage, PaginationMeta } from '../../core/api-client';
 import { LocaleService } from '../../core/locale.service';
 import { CompanySelectComponent } from './company-select.component';
+import { CatalogEditorComponent } from './catalog-editor.component';
 import { CatalogFilters, CatalogKind, CatalogRow, VehicleCatalogApi } from './vehicle-catalog-api.service';
 
 @Component({ selector: 'app-vehicle-catalog',
-    imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, MessageModule, SkeletonModule, TableModule, CompanySelectComponent],
+    imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, MessageModule, SkeletonModule, TableModule, CompanySelectComponent, CatalogEditorComponent],
     templateUrl: './vehicle-catalog.component.html', styleUrls: ['../users/users.scss', './vehicle-catalog.scss'] })
 export class VehicleCatalogComponent {
     readonly locale = inject(LocaleService);
@@ -30,6 +31,11 @@ export class VehicleCatalogComponent {
     readonly meta = signal<PaginationMeta | null>(null);
     readonly loading = signal(true);
     readonly error = signal('');
+    readonly editor = signal<{ row: CatalogRow | null; deleting: boolean } | null>(null);
+    readonly notice = signal('');
+    openEditor(row: CatalogRow | null = null, deleting = false): void { this.notice.set(''); this.editor.set({ row, deleting }); }
+    closeEditor(refresh: boolean): void { this.editor.set(null); if (refresh) this.refresh(); }
+    saved(): void { this.notice.set(this.locale.t(this.editor()?.deleting ? 'catalogDeleted' : 'catalogSaved')); this.editor.set(null); this.refresh(); }
     readonly filters = signal<CatalogFilters>({ search: '', company_id: null, page: 1 });
     private readonly reload = signal(0);
     readonly returnQuery = signal<Record<string, string | number | null>>({});

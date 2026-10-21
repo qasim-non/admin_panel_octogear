@@ -8,4 +8,6 @@
 .catalog-action { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; font-size: 12px; white-space: nowrap; color: #242c41; }
 .catalog-action:hover { text-decoration: underline; text-underline-offset: 3px; }
 .catalog-scope { margin-inline-start: 8px; font-weight: 400; }
+.catalog-toolbar, .catalog-row-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.catalog-notice { margin-bottom: 18px; }
 @media (max-width: 700px) { .filter-fields { grid-template-columns: 1fr; } .catalog-note { padding-inline: 20px; } }

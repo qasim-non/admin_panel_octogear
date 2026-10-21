@@ -3,8 +3,9 @@
 }
 <header class="page-heading">
     <div><p class="eyebrow">{{ locale.t('vehicleCatalog') }}</p><h1>{{ locale.t(title) }}</h1><p>{{ locale.t(isCompanies ? 'companiesIntro' : 'modelsIntro') }}</p></div>
-    <button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button>
+    <div class="catalog-toolbar"><button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button><button pButton icon="pi pi-plus" [label]="locale.t(isCompanies ? 'addCompany' : 'addModel')" (click)="openEditor()"></button></div>
 </header>
+@if (notice()) { <div class="catalog-notice" role="status"><p-message severity="success">{{ notice() }}</p-message></div> }
 <section class="surface-panel directory-panel" aria-labelledby="catalog-heading">
     <div class="section-heading">
         <div class="directory-title"><span class="directory-icon"><i [class]="isCompanies ? 'pi pi-building' : 'pi pi-car'" aria-hidden="true"></i></span><div><h2 id="catalog-heading">{{ locale.t(directoryTitle) }}</h2><p>{{ locale.t('catalogDirectoryIntro') }}</p></div></div>
@@ -25,13 +26,14 @@
     @else {
         <p class="table-scroll-hint"><i class="pi pi-arrows-h" aria-hidden="true"></i>{{ locale.t('scrollColumns') }}</p>
         <div class="table-scroll"><p-table [value]="rows()" dataKey="id" [tableStyle]="{'min-width': isCompanies ? '760px' : '650px'}" [pt]="{ tableContainer: { tabindex: 0, role: 'region', 'aria-label': locale.t(directoryTitle) } }">
-            <ng-template #header><tr><th scope="col">{{ locale.t('catalogId') }}</th><th scope="col">{{ locale.t(isCompanies ? 'companyName' : 'modelName') }}</th>@if (!isCompanies) { <th scope="col">{{ locale.t('carCompany') }}</th> }<th scope="col">{{ locale.t('countryOfOrigin') }}</th>@if (isCompanies) { <th scope="col">{{ locale.t('numberOfModels') }}</th><th scope="col"><span class="sr-only">{{ locale.t('viewModels') }}</span></th> }</tr></ng-template>
+            <ng-template #header><tr><th scope="col">{{ locale.t('catalogId') }}</th><th scope="col">{{ locale.t(isCompanies ? 'companyName' : 'modelName') }}</th>@if (!isCompanies) { <th scope="col">{{ locale.t('carCompany') }}</th> }<th scope="col">{{ locale.t('countryOfOrigin') }}</th>@if (isCompanies) { <th scope="col">{{ locale.t('numberOfModels') }}</th><th scope="col"><span class="sr-only">{{ locale.t('viewModels') }}</span></th> }<th scope="col">{{ locale.t('actions') }}</th></tr></ng-template>
             <ng-template #body let-row><tr>
                 <td class="catalog-id"><bdi>#{{ row.id }}</bdi></td>
                 <td><div class="catalog-name"><span class="catalog-mark"><i [class]="isCompanies ? 'pi pi-building' : 'pi pi-car'" aria-hidden="true"></i></span><bdi>{{ row.name }}</bdi></div></td>
                 @if (!isCompanies) { <td><bdi>{{ row.company.name }}</bdi></td> }
                 <td>{{ (isCompanies ? row.country?.name : row.company?.country?.name) || locale.t('notProvided') }}</td>
                 @if (isCompanies) { <td><span class="count-badge">{{ number(row.models_count) }}</span></td><td><a class="catalog-action" routerLink="/car-models" [queryParams]="modelsQuery(row.id)" [attr.aria-label]="locale.t('viewModels') + ' — ' + row.name">{{ locale.t('viewModels') }}<i [class]="locale.language() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'" aria-hidden="true"></i></a></td> }
+                <td><div class="catalog-row-actions"><button pButton severity="secondary" [text]="true" icon="pi pi-pencil" [attr.aria-label]="locale.t('catalogEdit') + ' — ' + row.name" (click)="openEditor(row)"></button><button pButton severity="danger" [text]="true" icon="pi pi-trash" [attr.aria-label]="locale.t('catalogDelete') + ' — ' + row.name" (click)="openEditor(row, true)"></button></div></td>
             </tr></ng-template>
         </p-table></div>
     }
@@ -43,3 +45,4 @@
         <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-double-left' : 'pi pi-angle-double-right'" [attr.aria-label]="locale.t('lastPage')" [disabled]="m.current_page >= m.last_page" (click)="changePage(m.last_page)"></button>
     </nav></footer> }
 </section>
+@if (editor(); as edit) { <app-catalog-editor [kind]="kind" [row]="edit.row" [deleting]="edit.deleting" [companyId]="filters().company_id" (closed)="closeEditor($event)" (saved)="saved()"/> }

@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -9,14 +9,14 @@ import { BilingualReference, ReferenceOption, ReferenceOptions } from '../../cor
 @Component({
     selector: 'app-company-select', imports: [FormsModule, SelectModule, ButtonModule],
     template: `
-        <p-select [inputId]="inputId()" [ariaLabel]="locale.t('carCompany')"
+        <p-select [inputId]="inputId()" [ariaLabel]="locale.t(type() === 'country' ? 'countryOfOrigin' : 'carCompany')"
             [ngModel]="value()" [ngModelOptions]="{standalone: true}" (onChange)="valueChange.emit($event.value ?? null)"
-            [options]="options()" optionLabel="name" optionValue="id" [showClear]="true"
-            [filter]="true" filterBy="search" [ariaFilterLabel]="locale.t('searchCompanies')"
-            [filterPlaceholder]="locale.t('searchCompanies')" [resetFilterOnHide]="true"
-            [placeholder]="locale.t('allCompanies')" [loading]="loading()"
-            [emptyMessage]="locale.t(loading() ? 'loadingCompanies' : error() ? 'companyOptionsError' : 'noCompanyOptions')"
-            [emptyFilterMessage]="locale.t(loading() ? 'loadingCompanies' : error() ? 'companyOptionsError' : 'noCompanyOptions')"
+            [disabled]="disabled()" [options]="options()" optionLabel="name" optionValue="id" [showClear]="true"
+            [filter]="true" filterBy="search" [ariaFilterLabel]="locale.t(type() === 'country' ? 'searchCountries' : 'searchCompanies')"
+            [filterPlaceholder]="locale.t(type() === 'country' ? 'searchCountries' : 'searchCompanies')" [resetFilterOnHide]="true"
+            [placeholder]="locale.t(type() === 'country' ? 'notProvided' : required() ? 'chooseCompany' : 'allCompanies')" [loading]="loading()"
+            [emptyMessage]="locale.t(type() === 'country' ? (loading() ? 'loadingReference' : error() ? 'referenceError' : 'noReferenceOptions') : (loading() ? 'loadingCompanies' : error() ? 'companyOptionsError' : 'noCompanyOptions'))"
+            [emptyFilterMessage]="locale.t(type() === 'country' ? (loading() ? 'loadingReference' : error() ? 'referenceError' : 'noReferenceOptions') : (loading() ? 'loadingCompanies' : error() ? 'companyOptionsError' : 'noCompanyOptions'))"
             (onShow)="load()" appendTo="body">
             <ng-template #footer>
                 @if (error()) { <div class="options-footer"><button pButton type="button" severity="secondary" [text]="true" [label]="locale.t('retry')" (click)="load()"></button></div> }
@@ -29,7 +29,12 @@ export class CompanySelectComponent {
     readonly locale = inject(LocaleService);
     private readonly catalog = inject(ReferenceOptions);
     private readonly destroyRef = inject(DestroyRef);
+    readonly type = input<'company' | 'country'>('company');
+    readonly required = input(false);
+    readonly disabled = input(false);
     readonly inputId = input('company-filter');
+    private readonly path = computed(() => this.type() === 'country' ? 'admin/catalog-countries/options' as const : 'admin/car-companies/options' as const);
+    constructor() { effect(() => { this.catalog.revision(); this.companies.set(null); }); }
     readonly value = input<number | null>(null);
     readonly knownCompany = input<ReferenceOption | null>(null);
     readonly valueChange = output<number | null>();
@@ -41,16 +46,16 @@ export class CompanySelectComponent {
             name: this.locale.language() === 'ar' ? company.name_ar : company.name_en, search: `${company.name_en} ${company.name_ar}` }));
         const id = this.value();
         if (!id) return [];
-        const known = this.catalog.find('admin/car-companies/options', this.locale.language(), id)
+        const known = this.catalog.find(this.path(), this.locale.language(), id)
             ?? (this.knownCompany()?.id === id ? this.knownCompany() : null)
-            ?? { id, name: `${this.locale.t('carCompany')} #${id}` };
+            ?? { id, name: `${this.locale.t(this.type() === 'country' ? 'countryOfOrigin' : 'carCompany')} #${id}` };
         return [{ ...known, search: known.name }];
     });
     load(): void {
         if (this.loading() || this.companies()) return;
-        this.loading.set(true); this.error.set(false);
-        this.catalog.load('admin/car-companies/options').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-            next: companies => { this.companies.set(companies); this.loading.set(false); },
+        this.loading.set(true); this.error.set(false); const revision = this.catalog.revision();
+        this.catalog.load(this.path()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: companies => { this.loading.set(false); if (revision !== this.catalog.revision()) { this.load(); return; } this.companies.set(companies); },
             error: () => { this.loading.set(false); this.error.set(true); }
         });
     }
