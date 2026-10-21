@@ -7,6 +7,7 @@ export const appRoutes: Routes = [
         { path: '', pathMatch: 'full', redirectTo: 'overview' },
         { path: 'overview', loadComponent: () => import('./app/features/overview/overview.component').then(m => m.OverviewComponent) },
         { path: 'orders', loadComponent: () => import('./app/features/orders/order-directory.component').then(m => m.OrderDirectoryComponent) },
+        { path: 'payments', loadComponent: () => import('./app/features/payments/payment-directory.component').then(m => m.PaymentDirectoryComponent) },
         { path: 'orders/:id', loadComponent: () => import('./app/features/orders/order-detail.component').then(m => m.OrderDetailComponent) },
         { path: 'stores', loadComponent: () => import('./app/features/stores/store-directory.component').then(m => m.StoreDirectoryComponent) },
         { path: 'stores/:id', loadComponent: () => import('./app/features/stores/store-detail.component').then(m => m.StoreDetailComponent) },

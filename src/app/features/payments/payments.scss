@@ -1,0 +1,10 @@
+.filter-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.filter-fields input { width: 100%; min-width: 0; }
+.payment-note { display: flex; gap: 10px; margin: 0 28px 24px; padding: 14px 16px; border-radius: 8px; background: #f5f7fa; color: #53617a; font-size: 12px; line-height: 1.8; }
+.payment-note i { margin-top: 4px; }
+.amount-cell { white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; }
+.payment-reference { display: block; margin-top: 5px; color: #637087; font-size: 11px; }
+.payment-id { color: #242c41; font-weight: 600; }
+.table-scroll-hint { display: flex; align-items: center; gap: 8px; color: #69758a; font-size: 11px; margin: 0; padding: 0 24px 16px; }
+@media (max-width: 1100px) { .filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .filter-fields { grid-template-columns: 1fr; } .payment-note { margin-inline: 18px; } }

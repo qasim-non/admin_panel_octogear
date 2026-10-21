@@ -123,3 +123,12 @@ The first valid login initializes a missing admin choice; stored preferences win
 on later profile loads. Signed-in changes use one explicit PATCH with saving/error
 feedback. Profile reads never write preferences. Session generation guards stale
 responses. Keep HTTP persistence outside LocaleService to avoid circular injection.
+
+## Payments
+
+Read `PAYMENTS_STEP.md` before changing the read-only payment directory. PaymentApi
+uses the protected admin read endpoint with 25-row pagination and combined filters.
+Recorded amounts are authoritative; `shared/money.ts` formats SAR minor units for
+both Payments and Orders. Retained archived records are explicit. Order navigation
+preserves payment filters and provides a return link; the order payment card links
+to all retained records for that order. No charge/refund operation is triggered.

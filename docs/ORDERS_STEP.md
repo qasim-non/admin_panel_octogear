@@ -81,3 +81,12 @@ semantics, lazy images, stale reads, error/permission/session states, and Englis
 desktop/Arabic mobile screenshots. Use the normal web build/typecheck/browser
 commands and isolated API tests. Exact results and known baseline failures are in
 `PROJECT_DOCUMENTATION.md`. No production deployment or retained-order mutation.
+
+## Step 7 follow-up: payment records
+
+The payment card now links to `/payments?order_id=...`, which lists all retained
+payment records for that order. Orders opened from Payments provide a **Back to
+payments** link that preserves the directory filters/page after refresh. The
+existing single payment card remains a single record. Money formatting is shared
+through `shared/money.ts`; pricing and order API behavior remain unchanged.
+See `PAYMENTS_STEP.md` for the separate read-only payment directory contract.

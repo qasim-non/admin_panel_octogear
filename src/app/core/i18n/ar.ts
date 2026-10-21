@@ -1,6 +1,16 @@
 import type { TextKey } from './en';
 
 export const ar: Record<TextKey, string> = {
+    payments: 'المدفوعات', paymentsIntro: 'راجع محاولات الدفع المسجلة وافتح الطلبات المرتبطة بها.',
+    paymentDirectory: 'سجلات الدفع', paymentDirectoryIntro: 'المبالغ والنتائج المسجلة للطلبات العامة والخاصة.',
+    paymentRecords: 'سجلات', paymentId: 'رقم الدفع', paymentSearch: 'العميل أو المتجر',
+    paymentSearchPlaceholder: 'الاسم أو هاتف العميل', paymentStatus: 'حالة الدفع', allPaymentMethods: 'جميع طرق الدفع',
+    paymentFrom: 'تاريخ التسجيل من (UTC)', paymentTo: 'تاريخ التسجيل حتى (UTC)', paymentCreated: 'وقت التسجيل (UTC)', paymentUpdated: 'آخر تحديث',
+    paymentHistoryHint: 'كل صف يمثل محاولة دفع مسجلة، بما فيها السجلات المؤرشفة المحفوظة. فلاتر التاريخ تعتمد وقت إنشاء السجل. المبالغ قيد الانتظار أو الفاشلة لا تعني تحصيل المال.',
+    paymentNewest: 'الأحدث تسجيلاً أولاً', loadingPayments: 'جارٍ تحميل سجلات الدفع', noMatchingPayments: 'لا توجد سجلات دفع مطابقة',
+    noMatchingPaymentsHint: 'جرّب فلاتر أخرى أو امسحها. تظهر السجلات هنا عند تسجيل محاولة دفع.',
+    paymentsDenied: 'ليس لديك إذن لعرض سجلات الدفع.', paymentFiltersInvalid: 'تحقّق من رقم الطلب والمدينة والتواريخ وفلاتر الدفع.',
+    archivedPayment: 'سجل مؤرشف', viewPaymentOrder: 'عرض الطلب', backToPayments: 'العودة إلى المدفوعات', viewOrderPayments: 'عرض جميع سجلات الدفع لهذا الطلب',
     languageSaveFailed: 'تعذّر تأكيد حفظ اللغة المفضلة. حاول حفظها مجدداً.',
     ordersIntro: 'ابحث عن الطلبات وراجع بيانات العملاء والعروض وسجلات الدفع.',
     orderDirectory: 'دليل الطلبات', orderDirectoryIntro: 'الطلبات العامة والطلبات من متجر محدد.',

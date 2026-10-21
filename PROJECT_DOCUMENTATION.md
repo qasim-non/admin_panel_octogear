@@ -455,3 +455,53 @@ failures: two AuthRateLimitTest OTP-limit expectations and the
 GeneralOrderDetailsTest quantity-field expectation. No errors occurred; the full
 suite remains non-green. Counts include concurrent mobile-language tests.
 Changed PHP syntax, targeted Pint, and both tracked diff whitespace checks passed.
+
+### 2026-10-21: slice 7 — Payments directory
+
+Read `docs/PAYMENTS_STEP.md` for the bounded screen/API walkthrough. Reviewed the
+full-size `Payment.png` wireframe and current payment models, policy, pricing and
+integration contracts. Added the OctoGear Payments sidebar page with 25-row
+pagination, customer/store search, order ID, city, payment status/method, order
+type and inclusive UTC creation-date filters. Cities remain lazy and search
+locally. Typed Arabic/English copy, RTL, skeletons, retry/denied/empty/session
+states and cancellable reads follow the existing web architecture.
+
+Each row shows its recorded amount/status, not an offer-derived estimate or
+collected-revenue total. Retained archived attempts and historical order/store/
+inventory context are visible; archived rows are labeled. Order links preserve
+directory filters/page through refresh and Back. Existing Orders details link to
+all payment records for the order. Shared SAR formatting preserves Orders money
+semantics. Missing/soft-deleted order details have no broken table link.
+
+Laravel adds GET `admin/payments`, PaymentIndexRequest, AdminPaymentQueryService,
+AdminPaymentResource and a separate PaymentPolicy read ability. Existing admin
+middleware and customer policy methods are preserved. Combined filters run before
+stable timestamp/ID pagination; resources perform no queries. The new query
+alone includes retained soft-deleted history. No model-wide visibility changes,
+migration, database mutation, payment/refund action, gateway activation, worker
+configuration, dependency change or production deployment was performed.
+
+Verification: Angular typecheck and production build passed. The full browser
+suite passed all 69 tests using synthetic intercepted APIs. English desktop and
+Arabic desktop/mobile screenshots were inspected; the Payments table was then
+refined for desktop width and keyboard-controlled horizontal scrolling and rebuilt.
+The five functional Payments checks passed again on that final build. Its visual/
+keyboard check also passed after scoping the test locator to the table's region;
+PrimeNG pass-through attributes focus the actual scrolling container. Final
+desktop and Arabic mobile screenshots were reviewed. No page-level overflow.
+The user's development server on 4200 was preserved; tests use port 4202.
+
+Focused Laravel checks passed 37 tests / 240 assertions. The full SQLite memory
+suite ran 608 tests / 16,856 assertions: 604 passed and four failed. One new
+test-only snapshot comparison used an unrefreshed factory model; it was corrected
+to compare database snapshots and passed in the focused rerun. The other three
+are the existing two AuthRateLimitTest OTP-limit expectations and the
+GeneralOrderDetailsTest quantity-field expectation. The full suite is not green;
+no product behavior was changed to hide these baseline failures. No errors occurred.
+Changed PHP syntax, targeted Pint and tracked diff whitespace checks passed.
+
+Windows sandbox readability checks prevented PHPUnit bootstrap, and the sandboxed
+browser preview stalled. Verification completed outside that sandbox with the same
+isolated test configuration; task-owned stalled processes were stopped. No retained
+admin account or real payment was used for testing. README's existing encoding
+tail was preserved.

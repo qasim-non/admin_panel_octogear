@@ -9,6 +9,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { LocaleService, TextKey } from '../../core/locale.service';
 import { PrivateImageComponent } from '../../shared/private-image.component';
+import { sarAmount } from '../../shared/money';
 import { userDate } from '../users/user-api.service';
 import { AdminOrder, OrderApi, orderError, orderImagePath, orderPart } from './order-api.service';
 import { OrderStatusComponent } from './order-status.component';
@@ -20,7 +21,9 @@ export class OrderDetailComponent {
     private readonly reload = signal(0); readonly data = signal<AdminOrder | null>(null); readonly loading = signal(true); readonly error = signal(''); readonly unavailable = signal(false);
     readonly part = orderPart; readonly imagePath = orderImagePath;
     date(value: string): string { return userDate(value, this.locale.language(), true); }
-    money(value: number | null | undefined): string { return typeof value === 'number' ? new Intl.NumberFormat(this.locale.language(), { style: 'currency', currency: 'SAR' }).format(value / 100) : this.locale.t('notProvided'); }
+    money(value: number | null | undefined): string { return typeof value === 'number' ? sarAmount(value, this.locale.language()) : this.locale.t('notProvided'); }
+    fromPayments(): boolean { return this.route.snapshot.queryParamMap.get('source') === 'payments'; }
+    backQuery() { const { source, ...filters } = this.route.snapshot.queryParams; return filters; }
     label(value: string | null | undefined): string {
         const keys: Record<string, TextKey> = { pending: 'pending', accepted: 'offerAccepted', rejected: 'offerRejected', not_selected: 'offerNotSelected', paid: 'paid', failed: 'failedPayment', refunded: 'refundedPayment', cash: 'cashPayment', credit_card: 'cardPayment', automatic: 'automaticTransmission', manual: 'manualTransmission', unknown: 'unknownTransmission' };
         return value && keys[value] ? this.locale.t(keys[value]) : this.locale.t('notProvided');
