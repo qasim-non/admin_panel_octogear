@@ -10,11 +10,12 @@ async function mockApi(page: Page, dashboardStatus = 200) {
         const path = new URL(route.request().url()).pathname;
         const headers = route.request().headers();
         if (path.endsWith('/auth/admin/login')) {
-            expect(route.request().postDataJSON()).toEqual({ email: 'admin@example.test', password: 'password' });
+            expect(route.request().postDataJSON()).toEqual({ email: 'admin@example.test', password: 'password', preferred_language: 'en' });
             return route.fulfill({ json: envelope({token: 'test-only-token'}) });
         }
         expect(headers['authorization']).toBe('Bearer test-only-token');
         expect(['en', 'ar']).toContain(headers['accept-language']);
+        if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: envelope({ preferred_language: route.request().postDataJSON().preferred_language }) });
         if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope(profile) });
         if (path.endsWith('/admin/dashboard')) return route.fulfill({ status: dashboardStatus, json: envelope(overview) });
         if (path.endsWith('/auth/logout')) return route.fulfill({ json: envelope(null) });

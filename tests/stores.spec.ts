@@ -25,6 +25,7 @@ async function setup(page: Page) {
         expect(req.headers()['authorization']).toBe('Bearer stores-test-token');
         const ar = req.headers()['accept-language'] === 'ar';
         const localized = (row: typeof state.rows[number]) => ({ ...row, city: { ...row.city, name: ar ? row.city.id === 1 ? 'الرياض' : 'جدة' : row.city.name }, companies: row.companies.map(c => ({ ...c, name: ar ? c.id === 1 ? 'تويوتا' : 'نيسان' : c.name })) });
+        if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: envelope({ preferred_language: route.request().postDataJSON().preferred_language }) });
         if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'employee', status: 'active' }) });
         if (path.endsWith('/admin/cities/options')) {
             state.cities++; expect(url.search).toBe('');

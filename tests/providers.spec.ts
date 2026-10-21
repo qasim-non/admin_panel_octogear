@@ -28,6 +28,7 @@ async function setup(page: Page) {
         const path = url.pathname;
         expect(route.request().headers()['authorization']).toBe('Bearer provider-test-token');
         const ar = route.request().headers()['accept-language'] === 'ar';
+        if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: envelope({ preferred_language: route.request().postDataJSON().preferred_language }) });
         if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'employee', status: 'active' }) });
         if (path.endsWith('/admin/cities/options')) {
             state.cities++;

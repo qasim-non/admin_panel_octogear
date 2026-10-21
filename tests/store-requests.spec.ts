@@ -25,6 +25,7 @@ async function setup(page: Page) {
         if (req.method() === 'OPTIONS') return route.fulfill({ status: 204 });
         const url = new URL(req.url()), path = url.pathname;
         expect(req.headers()['authorization']).toBe('Bearer review-test-token');
+        if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: envelope({ preferred_language: route.request().postDataJSON().preferred_language }) });
         if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'employee', status: 'active' }) });
         if (path.endsWith('/admin/cities/options')) {
             state.cities++; expect(url.search).toBe('');

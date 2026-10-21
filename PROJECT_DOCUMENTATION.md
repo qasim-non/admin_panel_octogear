@@ -418,3 +418,40 @@ limit expectations and the GeneralOrderDetailsTest quantity-field expectation.
 No errors occurred; the full suite remains non-green. Unrelated concurrent car
 seeder changes were left untouched. Tests used isolated SQLite memory databases.
 No live retained-account mutation or production deployment was performed.
+
+### 2026-10-21: slice 6 — Orders and saved administrator language
+
+Read `docs/ORDERS_STEP.md` and `docs/LANGUAGE_PREFERENCE_STEP.md` for separate,
+incremental Laravel/Angular review guides. Orders now has a read-only directory
+and details page using the OctoGear layout, Arabic/English text and responsive
+PrimeNG components. Combined ID/customer/phone/city/type/status/UTC-date filters
+retain their URL state. Orders keep the existing 15-row API pagination; user
+directories remain at 25. City options still load lazily and search locally.
+Details show request/vehicle/customer/store information, offers, authenticated
+photos on demand and the existing payment record, with correct SAR unit prices
+versus whole-request totals. No cancellation/refund UI or payment mutation.
+
+All UI dictionaries now live in typed `src/app/core/i18n/en.ts` and `ar.ts`.
+An admin's first successful login initializes a missing `preferred_language`;
+existing choices are restored before protected page requests. The signed-in
+language button saves one self-scoped PATCH and applies the confirmed choice.
+Failures support explicit retry; refresh does not write. The shared enum/request/
+preference service from concurrent mobile work is reused, preserving that work.
+
+Applied only the additive admin-language migration to verified local MySQL.
+No resets, seeders, unrelated migrations, retained-account sign-in or production
+deployment. API base configuration remains solely `public/app-config.json`.
+
+Verification: Angular typecheck and production build passed. The 63-test browser
+run passed all 53 existing checks and eight new checks. Corrected a redundant
+language-error alert role and a test that refreshed before navigation completed;
+rebuilt and reran all ten new checks successfully. Desktop and Arabic mobile
+Orders directory/detail screenshots were visually inspected; overflow checks pass.
+Browser tests use synthetic intercepted APIs and a preview on port 4202.
+
+Focused Laravel tests passed 36 tests / 241 assertions. Full isolated SQLite
+suite: 602 tests / 16,722 assertions, 599 passing and the same three baseline
+failures: two AuthRateLimitTest OTP-limit expectations and the
+GeneralOrderDetailsTest quantity-field expectation. No errors occurred; the full
+suite remains non-green. Counts include concurrent mobile-language tests.
+Changed PHP syntax, targeted Pint, and both tracked diff whitespace checks passed.

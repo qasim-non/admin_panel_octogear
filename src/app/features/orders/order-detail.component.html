@@ -1,0 +1,38 @@
+<a class="back-link" routerLink="/orders" queryParamsHandling="preserve"><i [class]="locale.language() === 'ar' ? 'pi pi-arrow-right' : 'pi pi-arrow-left'" aria-hidden="true"></i>{{ locale.t('backToOrders') }}</a>
+<header class="page-heading"><div><p class="eyebrow">{{ locale.t('orders') }}</p><h1>{{ locale.t('orderDetails') }}</h1></div><button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button></header>
+@if (loading()) { <div class="surface-panel detail-loading" role="status" aria-busy="true"><span class="sr-only">{{ locale.t('loadingOrderDetails') }}</span><p-skeleton height="6rem"/><p-skeleton height="20rem"/></div> }
+@else if (unavailable()) { <div class="surface-panel empty-state"><i class="pi pi-box" aria-hidden="true"></i><h2>{{ locale.t('orderUnavailable') }}</h2><p>{{ locale.t('orderUnavailableBody') }}</p></div> }
+@else if (error()) { <div class="surface-panel error-panel"><p-message severity="error">{{ error() }}</p-message><button pButton [label]="locale.t('retry')" (click)="refresh()"></button></div> }
+@else if (data(); as order) {
+    <section class="surface-panel profile-banner"><div><p class="eyebrow">{{ locale.t('orderId') }} #{{ order.id }}</p><h2>{{ part(order) || locale.t('notProvided') }}</h2><span class="profile-city">{{ locale.t(order.order_type === 'general' ? 'generalOrder' : 'specificOrder') }} · {{ date(order.created_at) }} (UTC)</span></div><app-order-status [status]="order.status"/></section>
+    <div class="detail-grid"><div class="detail-main">
+        <section class="surface-panel details-card"><h2><i class="pi pi-box" aria-hidden="true"></i>{{ locale.t('orderInformation') }}</h2><dl class="detail-fields">
+            <div><dt>{{ locale.t('orderPart') }}</dt><dd>{{ part(order) || locale.t('notProvided') }}</dd></div>
+            <div><dt>{{ locale.t('orderType') }}</dt><dd>{{ locale.t(order.order_type === 'general' ? 'generalOrder' : 'specificOrder') }}</dd></div>
+            @if (order.order_type === 'specific') { <div><dt>{{ locale.t('orderQuantity') }}</dt><dd>{{ order.quantity ?? locale.t('notProvided') }}</dd></div><div><dt>{{ locale.t('requestedUnitPrice') }}</dt><dd>{{ money(order.requested_unit_price) }}</dd></div> }
+            <div><dt>{{ locale.t(order.order_type === 'general' ? 'agreedPrice' : 'agreedUnitPrice') }}</dt><dd>{{ money(order.offered_price) }}</dd></div>
+            <div><dt>{{ locale.t('orderDescription') }}</dt><dd class="description">{{ order.notes || locale.t('notProvided') }}</dd></div>
+        </dl><p class="section-copy price-note">{{ locale.t(order.order_type === 'general' ? 'generalTotalHint' : 'specificPriceHint') }}</p></section>
+        <section class="surface-panel details-card"><h2><i class="pi pi-car" aria-hidden="true"></i>{{ locale.t('orderVehicle') }}</h2>
+            <p class="section-copy">{{ locale.t(order.order_type === 'general' ? 'orderSnapshot' : 'orderInventoryVehicle') }}</p>
+            <dl class="detail-fields"><div><dt>{{ locale.t('orderCarName') }}</dt><dd>{{ order.vehicle_details?.car_name || order.store_car_component?.car_name || locale.t('notProvided') }}</dd></div>
+                <div><dt>{{ locale.t('orderYear') }}</dt><dd>{{ order.vehicle_details?.manufacturing_year || order.store_car_component?.manufacturing_year || locale.t('notProvided') }}</dd></div>
+                @if (order.vehicle_details; as vehicle) {
+                    <div><dt>{{ locale.t('orderColor') }}</dt><dd>{{ vehicle.color_name || locale.t('notProvided') }}</dd></div>
+                    <div><dt>{{ locale.t('orderFuel') }}</dt><dd>{{ vehicle.fuel_type_name || locale.t('notProvided') }}</dd></div>
+                    <div><dt>{{ locale.t('orderTransmission') }}</dt><dd>{{ label(vehicle.transmission_type) }}</dd></div>
+                }
+            </dl>
+        </section>
+        <section class="surface-panel details-card"><h2><i class="pi pi-images" aria-hidden="true"></i>{{ locale.t('orderPhotos') }}</h2><div class="media-actions">
+            @for (photo of order.images; track photo.id; let i = $index) { @if (imagePath(photo.url, 'orders', order.id); as path) { <app-private-image [path]="path" [label]="locale.t('orderPhoto') + ' ' + (i + 1)"/> } } @empty { <p>{{ locale.t('noOrderPhotos') }}</p> }
+        </div></section>
+        @if (order.order_type === 'general') { <section class="surface-panel details-card"><h2><i class="pi pi-tags" aria-hidden="true"></i>{{ locale.t('orderOffers') }} · {{ order.offers.length }}</h2>
+            @for (offer of order.offers; track offer.id) { <article class="offer-card" [class.selected]="offer.id === order.accepted_offer_id"><div class="offer-heading"><strong>@if (offer.store) { <a class="record-link" [routerLink]="['/stores', offer.store.id]">{{ offer.store.name }}</a> } @else { {{ locale.t('notProvided') }} } · #{{ offer.id }}</strong><p-tag [value]="label(offer.status)" [severity]="offer.id === order.accepted_offer_id ? 'success' : 'secondary'"/></div><div class="offer-meta"><span>{{ locale.t('offerWholeTotal') }}: <strong>{{ money(offer.price) }}</strong></span><span>{{ date(offer.created_at) }} (UTC)</span></div>@if (offer.notes) { <p>{{ offer.notes }}</p> }@if (offer.rejection_reason) { <p>{{ locale.t('rejectionReason') }}: {{ offer.rejection_reason }}</p> }<div class="media-actions">@for (photo of offer.images; track photo.id; let i = $index) { @if (imagePath(photo.url, 'offers', offer.id); as path) { <app-private-image [path]="path" [label]="locale.t('offerPhoto') + ' ' + (i + 1)"/> } }</div></article> } @empty { <p>{{ locale.t('noOrderOffers') }}</p> }
+        </section> }
+    </div><aside class="detail-aside">
+        <section class="surface-panel details-card"><h2><i class="pi pi-user" aria-hidden="true"></i>{{ locale.t('customer') }}</h2><dl class="detail-fields compact-fields"><div><dt>{{ locale.t('fullName') }}</dt><dd>{{ order.customer?.full_name || locale.t('notProvided') }}</dd></div><div><dt>{{ locale.t('phoneSearch') }}</dt><dd><bdi dir="ltr">{{ order.customer?.mobile || locale.t('notProvided') }}</bdi></dd></div><div><dt>{{ locale.t('orderCity') }}</dt><dd>{{ order.customer?.city?.name || locale.t('notProvided') }}</dd></div></dl>@if (order.customer?.id; as id) { <a class="record-link" [routerLink]="['/customers', id]">{{ locale.t('orderCustomerLink') }}</a> }</section>
+        <section class="surface-panel details-card"><h2><i class="pi pi-shop" aria-hidden="true"></i>{{ locale.t('orderStore') }}</h2>@if (order.accepted_store; as store) { <dl class="detail-fields compact-fields"><div><dt>{{ locale.t('storeName') }}</dt><dd>{{ store.name }}</dd></div><div><dt>{{ locale.t('city') }}</dt><dd>{{ store.city?.name || locale.t('notProvided') }}</dd></div></dl><a class="record-link" [routerLink]="['/stores', store.id]">{{ locale.t('orderStoreLink') }}</a> } @else { <p>{{ locale.t('noSelectedStore') }}</p> }</section>
+        <section class="surface-panel details-card payment-card"><h2><i class="pi pi-wallet" aria-hidden="true"></i>{{ locale.t('orderPayment') }}</h2>@if (order.payment; as payment) { <dl class="detail-fields compact-fields"><div><dt>{{ locale.t('paymentAmount') }}</dt><dd class="payment-amount">{{ money(payment.amount) }}</dd></div><div><dt>{{ locale.t('status') }}</dt><dd>{{ label(payment.payment_status) }}</dd></div><div><dt>{{ locale.t('paymentMethod') }}</dt><dd>{{ label(payment.payment_method) }}</dd></div></dl> } @else { <p>{{ locale.t('noOrderPayment') }}</p> }</section>
+    </aside></div>
+}

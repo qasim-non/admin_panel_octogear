@@ -1,0 +1,38 @@
+<header class="page-heading"><div><p class="eyebrow">{{ locale.t('workspace') }}</p><h1>{{ locale.t('orders') }}</h1><p>{{ locale.t('ordersIntro') }}</p></div><button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button></header>
+<section class="surface-panel directory-panel" aria-labelledby="orders-heading">
+    <div class="section-heading"><div class="directory-title"><span class="directory-icon"><i class="pi pi-box" aria-hidden="true"></i></span><div><h2 id="orders-heading">{{ locale.t('orderDirectory') }}</h2><p>{{ locale.t('orderDirectoryIntro') }}</p></div></div>@if (meta(); as m) { <span class="total-pill">{{ number(m.total) }} {{ locale.t('orders') }}</span> }</div>
+    <form class="filter-form" [formGroup]="form" (ngSubmit)="apply()"><div class="filter-fields">
+        <div class="filter-field"><label for="order-id">{{ locale.t('orderId') }}</label><input pInputText type="number" min="1" step="1" id="order-id" formControlName="order_id"/></div>
+        <div class="filter-field"><label for="order-customer">{{ locale.t('orderCustomer') }}</label><input pInputText id="order-customer" formControlName="customer" maxlength="100" [placeholder]="locale.t('nameSearchPlaceholder')"/></div>
+        <div class="filter-field"><label for="order-mobile">{{ locale.t('orderPhone') }}</label><input pInputText id="order-mobile" formControlName="mobile" maxlength="20" inputmode="tel" [placeholder]="locale.t('phoneSearchPlaceholder')"/></div>
+        <div class="filter-field"><label for="order-city">{{ locale.t('orderCity') }}</label><app-city-select inputId="order-city" [value]="form.controls.city_id.value" [knownCity]="knownCity()" (valueChange)="form.controls.city_id.setValue($event)"/></div>
+        <div class="filter-field"><label for="order-type">{{ locale.t('orderType') }}</label><p-select inputId="order-type" [ariaLabel]="locale.t('orderType')" formControlName="type" [options]="types()" optionLabel="label" optionValue="value" appendTo="body"/></div>
+        <div class="filter-field"><label for="order-status">{{ locale.t('status') }}</label><p-select inputId="order-status" [ariaLabel]="locale.t('status')" formControlName="status" [options]="statuses()" optionLabel="label" optionValue="value" appendTo="body"/></div>
+        <div class="filter-field"><label for="order-from">{{ locale.t('orderFrom') }}</label><input pInputText type="date" id="order-from" formControlName="date_from"/></div>
+        <div class="filter-field"><label for="order-to">{{ locale.t('orderTo') }}</label><input pInputText type="date" id="order-to" formControlName="date_to"/></div>
+    </div>@if (dateError()) { <p-message severity="error">{{ locale.t('orderDateError') }}</p-message> }
+    <div class="filter-footer"><p>{{ locale.t('filterHint') }}</p><div class="filter-actions"><button pButton type="button" severity="secondary" [text]="true" [label]="locale.t('clearFilters')" (click)="clear()"></button><button pButton type="submit" icon="pi pi-filter" [label]="locale.t('applyFilters')" [disabled]="form.invalid"></button></div></div></form>
+    <div class="results-heading"><span>{{ locale.t('orderDirectory') }}</span><span>{{ locale.t('newestRequests') }}</span></div>
+    @if (error()) { <div class="error-panel results-error"><p-message severity="error">{{ error() }}</p-message><button pButton [label]="locale.t('retry')" (click)="refresh()"></button></div> }
+    @else if (loading()) { <div class="list-loading" role="status" aria-busy="true"><span class="sr-only">{{ locale.t('loadingOrders') }}</span>@for (i of [1,2,3,4,5]; track i) { <div class="skeleton-row"><p-skeleton width="80%" height="2rem"/></div> }</div> }
+    @else if (!rows().length) { <div class="empty-state"><span class="empty-icon"><i class="pi pi-box" aria-hidden="true"></i></span><h3>{{ locale.t('noMatchingOrders') }}</h3><p>{{ locale.t('noMatchingOrdersHint') }}</p><button pButton severity="secondary" [outlined]="true" [label]="locale.t('clearFilters')" (click)="clear()"></button></div> }
+    @else {
+        <p class="table-scroll-hint"><i class="pi pi-arrows-h" aria-hidden="true"></i>{{ locale.t('scrollColumns') }}</p>
+        <div class="table-scroll" role="region" tabindex="0" [attr.aria-label]="locale.t('orderDirectory')"><p-table [value]="rows()" dataKey="id" [tableStyle]="{'min-width':'1080px'}">
+            <ng-template #header><tr><th scope="col">{{ locale.t('orderId') }}</th><th scope="col">{{ locale.t('storeCreatedUtc') }}</th><th scope="col">{{ locale.t('orderCustomer') }}</th><th scope="col">{{ locale.t('orderStore') }}</th><th scope="col">{{ locale.t('orderType') }}</th><th scope="col">{{ locale.t('orderPart') }}</th><th scope="col">{{ locale.t('status') }}</th><th scope="col"><span class="sr-only">{{ locale.t('actions') }}</span></th></tr></ng-template>
+            <ng-template #body let-order><tr>
+                <td><a class="customer-name" [routerLink]="['/orders', order.id]" [queryParams]="query()">#{{ order.id }}</a></td>
+                <td class="date-cell">{{ date(order.created_at) }}</td><td>{{ order.customer?.full_name || locale.t('notProvided') }}<span class="customer-reference"><bdi dir="ltr">{{ order.customer?.mobile }}</bdi></span></td>
+                <td>{{ order.accepted_store?.name || locale.t('noSelectedStore') }}</td><td>{{ locale.t(order.order_type === 'general' ? 'generalOrder' : 'specificOrder') }}</td><td>{{ part(order) || locale.t('notProvided') }}</td><td><app-order-status [status]="order.status"/></td>
+                <td class="row-action"><a pButton severity="secondary" [text]="true" [routerLink]="['/orders', order.id]" [queryParams]="query()" [attr.aria-label]="locale.t('viewDetails') + ': #' + order.id">{{ locale.t('viewDetails') }}<i [class]="locale.language() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'" aria-hidden="true"></i></a></td>
+            </tr></ng-template>
+        </p-table></div>
+    }
+    @if (meta(); as m) { <footer class="table-footer"><p role="status">{{ locale.t('showing') }} <strong>{{ number(rangeStart()) }}–{{ number(rangeEnd()) }}</strong> {{ locale.t('of') }} <strong>{{ number(m.total) }}</strong> {{ locale.t('orders') }}</p><nav class="pagination" [attr.aria-label]="locale.t('orderDirectory')">
+        <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'" [attr.aria-label]="locale.t('firstPage')" [disabled]="m.current_page <= 1" (click)="changePage(1)"></button>
+        <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-right' : 'pi pi-angle-left'" [attr.aria-label]="locale.t('previousPage')" [disabled]="m.current_page <= 1" (click)="changePage(m.current_page - 1)"></button>
+        <span class="page-current" aria-current="page">{{ locale.t('pageNumber') }} <bdi>{{ number(m.current_page) }} / {{ number(m.last_page) }}</bdi></span>
+        <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-left' : 'pi pi-angle-right'" [attr.aria-label]="locale.t('nextPage')" [disabled]="m.current_page >= m.last_page" (click)="changePage(m.current_page + 1)"></button>
+        <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-double-left' : 'pi pi-angle-double-right'" [attr.aria-label]="locale.t('lastPage')" [disabled]="m.current_page >= m.last_page" (click)="changePage(m.last_page)"></button>
+    </nav></footer> }
+</section>

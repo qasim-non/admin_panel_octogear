@@ -75,3 +75,12 @@ This is a schema example, not a real account or credential. Existing role values
 ## Verification
 
 The new isolated SQLite tests cover real login token -> profile -> dashboard -> logout -> rejection of revoked token; customer/provider rejection from admin identity; admin-token rejection from mobile profile; unchanged customer profile/logout; and blocked/missing authentication. Full regression and frontend verification results are recorded in PROJECT_DOCUMENTATION.md.
+
+## 2026-10-21: saved administrator language
+
+The profile now also returns `preferred_language: "ar" | "en" | null`.
+First successful login initializes an unset preference; subsequent sign-ins restore
+the stored choice. Signed-in changes use PATCH `admin/profile/language`. Profile
+GETs remain read-only. This later slice adds a nullable admin-table column; the
+earlier no-migration statement describes only the original session slice.
+See `LANGUAGE_PREFERENCE_STEP.md` for migration, compatibility and review order.

@@ -1,0 +1,17 @@
+.filter-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.filter-fields input { min-width: 0; width: 100%; }
+.section-copy { color: #637087; font-size: 12px; line-height: 1.8; margin: -8px 0 20px; }
+.media-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.detail-fields a, .record-link { color: #34435e; text-decoration: underline; text-underline-offset: 3px; }
+.record-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 12px; }
+.compact-fields > div { grid-template-columns: 1fr; gap: 7px; }
+.offer-card { border: 1px solid #e4e8ef; border-radius: 8px; padding: 18px; margin-top: 16px; }
+.offer-card.selected { border-inline-start: 3px solid #f7c83c; }
+.offer-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.offer-card p { font-size: 13px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.offer-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 16px 0; color: #5f6b81; font-size: 12px; }
+.description { white-space: pre-wrap; }
+.price-note { margin: 20px 0 0; }
+.payment-amount { font-size: 24px !important; color: #242c41; }
+@media (max-width: 1000px) { .filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .filter-fields { grid-template-columns: 1fr; } .offer-heading { align-items: flex-start; flex-direction: column; } }

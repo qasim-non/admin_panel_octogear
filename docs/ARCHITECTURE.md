@@ -13,7 +13,7 @@ Official references: https://sakai.primeng.org/documentation, https://angular.de
 - `src/app/core/api.interceptor.ts`: Accept/locale/bearer headers only for the configured API URL boundary, request timeout, and authenticated 401 handling.
 - `src/app/core/session.service.ts`: current admin identity, login/logout and session generation. The bearer token and matching API base are retained in tab-scoped sessionStorage after profile verification. Passwords/profile data are never persisted, and tokens never go into localStorage, logs, or URLs. Startup restores and validates the token before routing; see `LARAVEL_SESSION_STEP.md`.
 - `src/app/core/auth.guard.ts`: client navigation guard; Laravel remains authoritative for permission checks.
-- `src/app/core/locale.service.ts`: typed English/Arabic copy and document direction. Only language preference is stored in localStorage; preference storage is optional.
+- `src/app/core/locale.service.ts`: dictionary selection and document direction. Typed copy lives in `core/i18n/en.ts` and `ar.ts`. Browser preference is a pre-login convenience; the signed-in admin's database preference is restored/saved by SessionService. See `LANGUAGE_PREFERENCE_STEP.md`.
 - `src/app/core/octogear-preset.ts` and `src/styles.scss`: shared PrimeNG theme, typography, tokens, and shell/table presentation.
 - `src/app/layout/`: Sakai layout components/service, adapted to OctoGear. Keep business requests in features/core, not layout primitives.
 - `src/app/features/`: standalone, route-lazy feature components. Login uses reactive forms; overview retrieves the existing dashboard summary and renders a PrimeNG table.
@@ -110,3 +110,16 @@ Store account activation is separate from the owner's account-access status.
 validates external location links; both store features reuse PrivateImageComponent.
 The backend prepares ratings averages in its query, avoiding per-row resource
 queries. `tests/stores.spec.ts` covers directory/details/actions and responsive UI.
+
+## Orders and account language
+
+Read `ORDERS_STEP.md` for the read-only Orders directory/detail flow. Server filters
+include customer city and inclusive UTC dates. Preserve general whole-request
+versus specific unit-price semantics and the API's SAR minor units. Private images
+reuse the authenticated viewer; read pages do not invoke cancellation or refund.
+
+Read `LANGUAGE_PREFERENCE_STEP.md` before changing login/profile/language behavior.
+The first valid login initializes a missing admin choice; stored preferences win
+on later profile loads. Signed-in changes use one explicit PATCH with saving/error
+feedback. Profile reads never write preferences. Session generation guards stale
+responses. Keep HTTP persistence outside LocaleService to avoid circular injection.
