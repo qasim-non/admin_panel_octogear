@@ -6,6 +6,8 @@ export const appRoutes: Routes = [
     { path: '', canActivate: [authGuard], canActivateChild: [authGuard], loadComponent: () => import('./app/layout/component/app.layout').then(m => m.AppLayout), children: [
         { path: '', pathMatch: 'full', redirectTo: 'overview' },
         { path: 'overview', loadComponent: () => import('./app/features/overview/overview.component').then(m => m.OverviewComponent) },
+        { path: 'car-companies', data: { catalogKind: 'companies' }, loadComponent: () => import('./app/features/vehicle-catalog/vehicle-catalog.component').then(m => m.VehicleCatalogComponent) },
+        { path: 'car-models', data: { catalogKind: 'models' }, loadComponent: () => import('./app/features/vehicle-catalog/vehicle-catalog.component').then(m => m.VehicleCatalogComponent) },
         { path: 'orders', loadComponent: () => import('./app/features/orders/order-directory.component').then(m => m.OrderDirectoryComponent) },
         { path: 'payments', loadComponent: () => import('./app/features/payments/payment-directory.component').then(m => m.PaymentDirectoryComponent) },
         { path: 'orders/:id', loadComponent: () => import('./app/features/orders/order-detail.component').then(m => m.OrderDetailComponent) },

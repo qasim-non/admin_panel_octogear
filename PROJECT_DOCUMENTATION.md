@@ -123,7 +123,7 @@ Do not repeatedly request permission for already authorized routine changes. Kee
 2. Establish shared tokens, original assets, bilingual layout, and central API configuration.
 3. Implement the approved login and verified admin session flow, including failure states and logout.
 4. Build the admin shell and one real table feature to validate reusable table/form/detail components.
-5. Add dashboard and remaining feature areas in bounded slices: customers, providers/reviews, stores/reviews, orders, payments, sub-admins, catalogs. Adjust ordering to actual API dependencies and owner priorities.
+5. Add dashboard and remaining feature areas in bounded slices: customers, providers/reviews, stores/reviews, orders, payments, catalogs, sub-admins. The owner moved catalogs before sub-admins on 2026-10-21; sub-admin access-rule changes remain last.
 6. Verify responsive layouts, RTL, permissions, real data behavior, and production configuration; document deployment without deploying unless requested.
 
 ## Progress
@@ -505,3 +505,55 @@ browser preview stalled. Verification completed outside that sandbox with the sa
 isolated test configuration; task-owned stalled processes were stopped. No retained
 admin account or real payment was used for testing. README's existing encoding
 tail was preserved.
+
+### 2026-10-21: slice 8 — Car companies, then car models
+
+The owner chose vehicle catalogs before sub-admin management. Sub-admins and
+changes to their role/access rules remain last. Read docs/VEHICLE_CATALOG_STEP.md
+for the incremental API and web review order. Both full-size wireframes were
+inspected: they specify searchable directories, with no write flows. Car models
+maps to CarName (Camry, Sunny), not the separate model-year/variant entity.
+
+Added `/car-companies` and `/car-models` with OctoGear sidebar entries, 25-row
+pagination, bilingual name search, manufacturer country of origin, model counts,
+and View models / Back navigation retaining filters/page across refresh. The
+Models page adds a company filter with one lazy full option download and local
+Arabic/English search. The small option-cache logic was extracted from CityCatalog
+into ReferenceOptions and reused; existing CityCatalog/CitySelect contracts remain.
+Large model lists stay server-paginated. No automatic option load on page entry.
+
+Laravel adds three admin-protected read endpoints, a shared catalog policy,
+validated requests, an injected query service and resources reusing ReferenceResource.
+Counts/relationships are prepared before serialization. Removed references are
+excluded consistently, filters combine before stable name_en/id ordering, and
+private/no-store responses retain the existing envelopes. The public reference
+APIs, roles, seeds, catalog records and historical order snapshots are unchanged.
+No migrations, seeding, catalog writes, retained-account login or deployment.
+
+Typed en/ar copy, RTL, focusable table scrolling, cancelled stale reads, pagination
+recovery, empty/error/denied/session states and responsive layouts follow the
+existing web conventions. Country is explicitly manufacturer origin, not assembly
+location. New catalog tests use synthetic browser APIs and isolated SQLite data.
+
+Verification: Angular typecheck and final production build passed. The full
+75-test browser run passed all 69 pre-existing checks plus four catalog checks;
+two new checks used the wrong expected button label (Retry instead of the shared
+Try again). Corrected those test locators and reran all six new catalog checks
+successfully on the final build. Desktop/Arabic/mobile screenshots were inspected;
+company links use the brand navy and tables support keyboard horizontal scrolling.
+No page-level horizontal overflow was detected. Browser tests use intercepted
+synthetic APIs on preview port 4202, leaving the development server on 4200 intact.
+
+The focused Laravel catalog/reference/city set passed 21 tests / 337 assertions.
+The full isolated SQLite suite ran 615 tests / 17,024 assertions: 612 passed and
+three previously documented failures remain (two AuthRateLimitTest OTP-limit
+expectations and GeneralOrderDetailsTest's quantity-field expectation). No errors.
+Strengthened nested-resource serialization coverage and reran all seven catalog
+tests: 166 assertions passed. Changed PHP syntax, targeted Pint and tracked diff
+whitespace checks passed. The full backend suite remains non-green.
+
+Windows sandbox PHP readability/writability checks prevented PHPUnit/Pint startup;
+those checks completed outside the sandbox with the same isolated configuration.
+No retained database, catalog data, account, seeder, migration or production host
+was changed. Live authenticated browser-to-Laravel verification remains outstanding.
+The README's pre-existing encoding tail was preserved.

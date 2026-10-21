@@ -111,6 +111,17 @@ validates external location links; both store features reuse PrivateImageCompone
 The backend prepares ratings averages in its query, avoiding per-row resource
 queries. `tests/stores.spec.ts` covers directory/details/actions and responsive UI.
 
+## Vehicle catalog
+
+Read `VEHICLE_CATALOG_STEP.md` before changing `features/vehicle-catalog`.
+The companies and car-model directories share one route-configured component.
+Car models here map to Laravel CarName, as in the wireframe, not CarModel variants.
+Both pages use 25-row server pagination, URL filters and cancellable reads.
+ReferenceOptions owns complete small bilingual option caches, keyed by catalog
+path and API base; CityCatalog delegates to it while retaining its public API.
+CompanySelect loads on opening and searches locally using PrimeNG Select.
+No catalog writes or revised sub-admin rules are introduced.
+
 ## Orders and account language
 
 Read `ORDERS_STEP.md` for the read-only Orders directory/detail flow. Server filters

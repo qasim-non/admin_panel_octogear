@@ -1,6 +1,20 @@
 import type { TextKey } from './en';
 
 export const ar: Record<TextKey, string> = {
+    carCompanies: 'شركات السيارات', carModels: 'موديلات السيارات', vehicleCatalog: 'دليل السيارات',
+    companiesIntro: 'تصفح شركات السيارات واستعرض موديلاتها في دليل OctoGear.',
+    modelsIntro: 'ابحث عن موديلات السيارات لدى جميع الشركات أو اختر شركة محددة.',
+    companyDirectory: 'دليل الشركات', modelDirectory: 'دليل الموديلات', catalogDirectoryIntro: 'ابحث بالعربية أو الإنجليزية. ٢٥ سجلاً في كل صفحة.',
+    companyName: 'اسم الشركة', modelName: 'اسم الموديل', carCompany: 'شركة السيارات', countryOfOrigin: 'بلد المنشأ',
+    countryOriginHint: 'يشير البلد إلى منشأ الشركة المصنعة، وليس إلى مكان تجميع السيارة.',
+    numberOfModels: 'عدد الموديلات', companiesCount: 'شركة', modelsCount: 'موديل', catalogId: 'الرقم',
+    catalogSearchPlaceholder: 'ابحث بالعربية أو الإنجليزية', viewModels: 'عرض الموديلات', backToCompanies: 'العودة إلى شركات السيارات',
+    allCompanies: 'جميع الشركات', searchCompanies: 'البحث عن شركة', loadingCompanies: 'جارٍ تحميل الشركات…',
+    companyOptionsError: 'تعذر تحميل الشركات.', noCompanyOptions: 'لا توجد شركات مطابقة',
+    catalogFiltered: 'نتائج مصفاة', catalogSort: 'مرتبة حسب الاسم الإنجليزي', loadingCatalog: 'جارٍ تحميل دليل السيارات',
+    noMatchingCatalog: 'لا توجد سجلات مطابقة', noMatchingCatalogHint: 'جرب اسماً آخر أو امسح عوامل التصفية لاستعراض الدليل.',
+    emptyCatalog: 'لا توجد سجلات في الدليل بعد', emptyCatalogHint: 'ستظهر السجلات هنا عندما تتوفر بيانات دليل السيارات.',
+    catalogDenied: 'ليس لديك صلاحية عرض دليل السيارات.', catalogFiltersInvalid: 'تحقق من البحث أو امسح تصفية الشركة. قد تكون الشركة غير متاحة الآن.',
     payments: 'المدفوعات', paymentsIntro: 'راجع محاولات الدفع المسجلة وافتح الطلبات المرتبطة بها.',
     paymentDirectory: 'سجلات الدفع', paymentDirectoryIntro: 'المبالغ والنتائج المسجلة للطلبات العامة والخاصة.',
     paymentRecords: 'سجلات', paymentId: 'رقم الدفع', paymentSearch: 'العميل أو المتجر',
