@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,7 +18,7 @@ interface Overview {
 }
 
 @Component({
-    selector: 'app-overview', imports: [DecimalPipe, ButtonModule, MessageModule, SkeletonModule, TableModule, TagModule],
+    selector: 'app-overview', imports: [RouterLink, DecimalPipe, ButtonModule, MessageModule, SkeletonModule, TableModule, TagModule],
     template: `
       <header class="page-heading"><div><p class="eyebrow">{{ locale.t('workspace') }}</p><h1>{{ locale.t('overview') }}</h1><p>{{ locale.t('overviewIntro') }}</p></div>
         <button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button>
@@ -45,7 +46,7 @@ interface Overview {
               </p-table>
             }
           </section>
-          <section class="surface-panel review-panel"><span class="review-icon"><i class="pi pi-clipboard" aria-hidden="true"></i></span><p class="eyebrow">{{ locale.t('reviewQueue') }}</p><h2>{{ locale.t('pendingStores') }}</h2><strong class="review-count">{{ summary.stores.pending_requests | number }}</strong><p>{{ locale.t('pendingIntro') }}</p></section>
+          <section class="surface-panel review-panel"><span class="review-icon"><i class="pi pi-clipboard" aria-hidden="true"></i></span><p class="eyebrow">{{ locale.t('reviewQueue') }}</p><h2>{{ locale.t('pendingStores') }}</h2><strong class="review-count">{{ summary.stores.pending_requests | number }}</strong><p>{{ locale.t('pendingIntro') }}</p><a pButton routerLink="/store-requests" [queryParams]="{status:'pending'}">{{ locale.t('openReviewQueue') }}</a></section>
         </div>
       }
     `

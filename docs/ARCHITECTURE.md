@@ -9,7 +9,7 @@ Official references: https://sakai.primeng.org/documentation, https://angular.de
 ## Responsibility boundaries
 
 - `src/app/core/app-settings.ts`: load and validate runtime public configuration before startup. Failure displays a recoverable setup error instead of choosing a different API.
-- `src/app/core/api-client.ts`: typed API envelope/pagination metadata and centralized GET/POST/PATCH URL construction; GET accepts query parameters.
+- `src/app/core/api-client.ts`: typed API envelope/pagination metadata and centralized GET/POST/PATCH URL construction; GET accepts query parameters. Protected image reads use the same configured API boundary with Blob responses.
 - `src/app/core/api.interceptor.ts`: Accept/locale/bearer headers only for the configured API URL boundary, request timeout, and authenticated 401 handling.
 - `src/app/core/session.service.ts`: current admin identity, login/logout and session generation. The bearer token and matching API base are retained in tab-scoped sessionStorage after profile verification. Passwords/profile data are never persisted, and tokens never go into localStorage, logs, or URLs. Startup restores and validates the token before routing; see `LARAVEL_SESSION_STEP.md`.
 - `src/app/core/auth.guard.ts`: client navigation guard; Laravel remains authoritative for permission checks.
@@ -76,11 +76,37 @@ catalog request is made just by entering the page, and no customer data is cache
 
 ## Provider stores
 
-`features/providers` contains the on-demand read-only store panel and API adapter.
+`features/providers` contains the on-demand read-only store panel. Its API adapter
+and status component are shared with `features/stores` (see `STORES_STEP.md`).
 It reuses GET admin/stores with the validated owner_id filter added in Laravel.
 It retains the existing 15-store pagination and rejects rows belonging to another
 owner. Store reads remain separate from user reads and account-status writes.
 No stores are fetched merely by opening a provider directory or detail page.
 The shared city catalog is reused across customer and provider routes.
+Store names link to full details; Open store directory retains the owner scope.
 `tests/providers.spec.ts` covers provider navigation/filters/refresh, confirmed
 actions, owner scoping, local city search, errors, and Arabic/mobile presentation.
+
+## Store request review
+
+Read `STORE_REQUESTS_STEP.md` before changing `features/store-requests`. The queue
+defaults to pending, uses existing 15-request pages, and shares the lazy city
+catalog. Query filters persist through navigation. Detail reads prepare localized
+brand/city labels in Laravel. Confirmed accept/reject writes reuse existing
+transactional approval rules and require a fresh read after success or uncertainty.
+The reusable `PrivateImageComponent` downloads authorized images on demand through
+the central API client, never placing bearer tokens in image URLs. English/Arabic,
+RTL, local table scrolling, and the existing OctoGear theme apply to this feature.
+
+## Store management
+
+Read `STORES_STEP.md` before changing `features/stores`. StoreApi owns list,
+detail, and activation calls and is reused by the provider stores panel. The
+directory keeps 15-store pages, URL filters, lazy local city search, and explicit
+owner scope. Details expose approved fields and link to a pending change review.
+Activation requires confirmation and a fresh read after success or uncertainty.
+Store account activation is separate from the owner's account-access status.
+`shared/store-links.ts` restricts media paths to the current store/request and
+validates external location links; both store features reuse PrivateImageComponent.
+The backend prepares ratings averages in its query, avoiding per-row resource
+queries. `tests/stores.spec.ts` covers directory/details/actions and responsive UI.

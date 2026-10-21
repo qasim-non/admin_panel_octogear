@@ -328,3 +328,93 @@ the documented demo image-write issue in GeneralOrderDetailsTest. Those areas
 were not changed; the full suite is not green. API tests used SQLite memory
 databases, and browser checks used a dedicated preview on 4202. No live retained
 admin/provider account was used for verification.
+
+### 2026-10-21: slice 4 — store request review
+
+Read `docs/STORE_REQUESTS_STEP.md` for the screen decisions and incremental Laravel
+and Angular walkthrough. Reviewed the store/provider request list/detail wireframes.
+Added a unified Store requests queue and request details, using the existing
+OctoGear identity, PrimeNG controls, Arabic/English RTL, and responsive tables.
+The sidebar and overview pending-request card both link to the queue.
+
+The queue defaults to pending with server search, status, request-type and city
+filters. It retains the existing API's 15-request pagination; customer/provider
+pages remain 25. Search covers store/applicant names and phone numbers. City options
+reuse the shared lazy catalog and local search. URL state survives detail/Back and
+refresh. Details show applicant/store information, protected images on demand,
+brand names, review metadata, and a before/proposed comparison for store changes.
+Approve/reject require confirmation; rejection requires a reason. Single-flight
+decisions reconcile via a fresh GET, and uncertainty blocks another write until
+refresh. Historical photos, applicant email and date-range filters are not invented.
+
+Laravel adds optional validated list filters, stable timestamp/ID ordering and
+detail label preparation. Resources perform no label queries during serialization.
+Existing accept/reject rules, authorization, transaction locks, stale-version
+checks and review notifications are preserved. No new route, migration, dependency,
+worker configuration, retained-record mutation, or production deployment.
+
+Private images use the existing protected media routes with bearer headers through
+the central API client. They are loaded only on interaction and held as object URLs
+until the component is destroyed; tokens never appear in URLs. API host changes
+still require editing only `public/app-config.json`.
+
+Verification: Angular typecheck and production build passed. All 45 Playwright
+tests passed (17 authentication, 12 customer, 8 provider, 8 store-request tests)
+against intercepted synthetic APIs. Desktop and Arabic mobile layouts were
+inspected; an English queue-copy correction was then rebuilt and visually checked.
+Focused Laravel checks passed 50 tests / 389 assertions, including numeric `0`
+search, combined filters, stable pagination, historical labels and existing review
+and media behavior. Changed PHP syntax and targeted Pint passed. Both project
+diffs passed whitespace checks; the existing README encoding tail was preserved.
+
+Full Laravel suite: 579 tests / 5,059 assertions, 576 passing and three previously
+documented failures: two AuthRateLimitTest OTP-limit expectations and the
+GeneralOrderDetailsTest quantity-field expectation. There were no errors on this
+run; the earlier demo-image error did not recur. The full suite is not green.
+Tests used SQLite memory databases and a browser preview on port 4202. No live
+authenticated review against a retained account was performed.
+
+### 2026-10-21: slice 5 — stores directory and details
+
+Read `docs/STORES_STEP.md` for the screen review and incremental Laravel/Angular
+walkthrough. Reviewed `Stores.png`, `Stores-2.png`, and `Store details.png` from
+the read-only legacy wireframes. Added Stores to the sidebar, with a searchable
+directory and approved store details using the existing OctoGear design.
+
+Name, phone, status, city, and optional owner filters combine on the server.
+Stores retain 15-row pages; users retain 25. URL filters/page survive details,
+Back, and refresh. City search reuses the lazy bilingual in-memory catalog.
+Provider store panels share the store adapter and status component, and link to
+store details and an owner-scoped directory. Details include contact/location,
+registration, supported brands, inventory count, rating, private gallery/document
+viewing on demand, and a link to any pending change request.
+
+Activate/Deactivate uses confirmation, one PATCH, and a fresh detail GET.
+Uncertain writes require refresh before another attempt. The existing Laravel
+operation changes only store status; owner access, orders, and pending proposals
+remain unchanged. Shared media helpers reject unrelated or external image URLs.
+The only API base remains `public/app-config.json`.
+
+Laravel validates city/page filters, stabilizes equal-timestamp pagination, and
+prepares detail relations and rating averages before serialization. The resource
+no longer performs a rating query per table row. Existing endpoints, middleware,
+approval rules, and activation operation are reused. No migrations or dependencies
+were added. Date ranges, inventory editing, bulk operations, exports, deletion,
+and a full audit timeline remain separate work; the page has no placeholder actions.
+
+Verification: Angular typecheck and production build passed. The full browser run
+passed all 45 existing checks and six of eight new Stores checks. Two test-only
+issues were corrected (dialog-close timing and an assertion that matched an owner
+name); the complete eight-test Stores suite then passed. No application change was
+needed for those corrections. Desktop directory/details/confirmation and Arabic
+mobile directory/details screenshots were visually inspected; overflow checks pass.
+Browser tests intercept APIs and use a separate preview on port 4202.
+
+Focused Laravel checks passed 46 tests / 439 assertions. Changed PHP syntax,
+Pint, and both project diff whitespace checks passed. The README's pre-existing
+encoding tail was preserved. Full Laravel suite: 587 tests / 5,185 assertions,
+584 passing and the same three documented failures: two AuthRateLimitTest OTP
+limit expectations and the GeneralOrderDetailsTest quantity-field expectation.
+No errors occurred; the full suite remains non-green. Unrelated concurrent car
+seeder changes were left untouched. Tests used isolated SQLite memory databases.
+No live retained-account mutation or production deployment was performed.

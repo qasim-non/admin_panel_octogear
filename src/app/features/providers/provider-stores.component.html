@@ -16,12 +16,12 @@
         <div class="table-scroll" role="region" tabindex="0" [attr.aria-label]="locale.t('storeListRegion')">
             <p-table [value]="rows()" dataKey="id" [tableStyle]="{'min-width': '650px'}">
                 <ng-template #header><tr><th scope="col">{{ locale.t('storeName') }}</th><th scope="col">{{ locale.t('phoneSearch') }}</th><th scope="col">{{ locale.t('city') }}</th><th scope="col">{{ locale.t('status') }}</th></tr></ng-template>
-                <ng-template #body let-store><tr><td><span class="store-name">{{ store.name }}</span><span class="customer-reference">#{{ store.id }}</span></td><td><bdi class="phone" dir="ltr">{{ store.mobile }}</bdi></td><td>{{ store.city?.name ?? locale.t('notProvided') }}</td><td><p-tag [value]="locale.t(store.status === 'active' ? 'activeStore' : 'inactiveStore')" [icon]="store.status === 'active' ? 'pi pi-check-circle' : 'pi pi-pause-circle'" [severity]="store.status === 'active' ? 'success' : 'secondary'"/></td></tr></ng-template>
+                <ng-template #body let-store><tr><td><a class="customer-name" [routerLink]="['/stores', store.id]" [queryParams]="{owner_id: providerId()}">{{ store.name }}</a><span class="customer-reference">#{{ store.id }}</span></td><td><bdi class="phone" dir="ltr">{{ store.mobile }}</bdi></td><td>{{ store.city?.name ?? locale.t('notProvided') }}</td><td><app-store-status [status]="store.status"/></td></tr></ng-template>
             </p-table>
         </div>
     }
     @if (meta(); as pagination) {
-        <footer class="table-footer"><p>{{ locale.t('total') }}: <strong>{{ number(pagination.total) }}</strong> {{ locale.t('stores') }}</p>
+        <footer class="table-footer"><a class="back-link" routerLink="/stores" [queryParams]="{owner_id: providerId()}">{{ locale.t('openStoreDirectory') }}</a><p>{{ locale.t('total') }}: <strong>{{ number(pagination.total) }}</strong> {{ locale.t('stores') }}</p>
             <nav class="pagination" [attr.aria-label]="locale.t('providerStores')">
                 <button pButton severity="secondary" [text]="true" [icon]="locale.language() === 'ar' ? 'pi pi-angle-right' : 'pi pi-angle-left'" [attr.aria-label]="locale.t('previousPage')" [disabled]="pagination.current_page <= 1" (click)="changePage(pagination.current_page - 1)"></button>
                 <span class="page-current" aria-current="page">{{ locale.t('pageNumber') }} {{ number(pagination.current_page) }} / {{ number(pagination.last_page) }}</span>

@@ -6,14 +6,15 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
+import { RouterLink } from '@angular/router';
+import { StoreStatusComponent } from '../stores/store-status.component';
 import { errorMessage, PaginationMeta } from '../../core/api-client';
 import { LocaleService } from '../../core/locale.service';
-import { ProviderStore, ProviderStoreApi } from './provider-store-api.service';
+import { AdminStore, StoreApi } from '../stores/store-api.service';
 
 @Component({
     selector: 'app-provider-stores',
-    imports: [ButtonModule, MessageModule, SkeletonModule, TableModule, TagModule],
+    imports: [ButtonModule, MessageModule, SkeletonModule, TableModule, RouterLink, StoreStatusComponent],
     templateUrl: './provider-stores.component.html',
     styleUrl: '../users/users.scss',
     styles: [':host { margin-top: 24px; } .store-summary { padding: 0 24px 24px; } .store-name { font-weight: 600; overflow-wrap: anywhere; }']
@@ -21,12 +22,12 @@ import { ProviderStore, ProviderStoreApi } from './provider-store-api.service';
 export class ProviderStoresComponent {
     readonly providerId = input.required<number>();
     readonly locale = inject(LocaleService);
-    private readonly api = inject(ProviderStoreApi);
+    private readonly api = inject(StoreApi);
     private readonly request = signal<{ page: number; revision: number } | null>(null);
     readonly opened = signal(false);
     readonly loading = signal(false);
     readonly error = signal('');
-    readonly rows = signal<ProviderStore[]>([]);
+    readonly rows = signal<AdminStore[]>([]);
     readonly meta = signal<PaginationMeta | null>(null);
 
     constructor() {
@@ -34,7 +35,7 @@ export class ProviderStoresComponent {
             switchMap(([id, , request]) => {
                 if (!request) return of(null);
                 this.loading.set(true); this.error.set(''); this.rows.set([]); this.meta.set(null);
-                return this.api.list(id, request.page).pipe(
+                return this.api.list({ owner_id: id, page: request.page }).pipe(
                     map(result => ({ result, error: '' })),
                     catchError(error => of({ result: null, error: error instanceof HttpErrorResponse && error.status === 403
                         ? this.locale.t('storesAccessDenied') : errorMessage(error, this.locale) }))

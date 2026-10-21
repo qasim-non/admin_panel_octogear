@@ -6,6 +6,10 @@ export const appRoutes: Routes = [
     { path: '', canActivate: [authGuard], canActivateChild: [authGuard], loadComponent: () => import('./app/layout/component/app.layout').then(m => m.AppLayout), children: [
         { path: '', pathMatch: 'full', redirectTo: 'overview' },
         { path: 'overview', loadComponent: () => import('./app/features/overview/overview.component').then(m => m.OverviewComponent) },
+        { path: 'stores', loadComponent: () => import('./app/features/stores/store-directory.component').then(m => m.StoreDirectoryComponent) },
+        { path: 'stores/:id', loadComponent: () => import('./app/features/stores/store-detail.component').then(m => m.StoreDetailComponent) },
+        { path: 'store-requests', loadComponent: () => import('./app/features/store-requests/store-requests.component').then(m => m.StoreRequestsComponent) },
+        { path: 'store-requests/:id', loadComponent: () => import('./app/features/store-requests/store-request-detail.component').then(m => m.StoreRequestDetailComponent) },
         { path: 'providers', data: { userKind: 'providers' }, loadComponent: () => import('./app/features/users/user-directory.component').then(m => m.UserDirectoryComponent) },
         { path: 'providers/:id', data: { userKind: 'providers' }, loadComponent: () => import('./app/features/users/user-detail.component').then(m => m.UserDetailComponent) },
         { path: 'customers', data: { userKind: 'customers' }, loadComponent: () => import('./app/features/users/user-directory.component').then(m => m.UserDirectoryComponent) },

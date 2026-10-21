@@ -1,5 +1,10 @@
 # Step 3: service providers
 
+Subsequent store-management work is documented in `STORES_STEP.md`. The former
+provider-store API adapter now lives in the shared `features/stores/StoreApi`;
+the provider panel links to full store details and the owner-scoped directory.
+The numbered change history below describes the original provider slice.
+
 This slice adds the provider directory, provider details, confirmed block/unblock,
 and a read-only list of the provider's stores. It follows the existing OctoGear
 navy/yellow identity and PrimeNG/Sakai patterns. The full-size legacy references

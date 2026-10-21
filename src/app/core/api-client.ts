@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { AppSettings } from './app-settings';
 import { LocaleService } from './locale.service';
-import { TimeoutError } from 'rxjs';
+import { throwError, TimeoutError } from 'rxjs';
 
 export interface PaginationMeta { current_page: number; last_page: number; per_page: number; total: number; }
 export interface ApiEnvelope<T> { success: boolean; message: string; data: T; meta?: PaginationMeta; }
@@ -16,6 +16,10 @@ export class ApiClient {
     }
     patch<T>(path: string, body: unknown) { return this.http.patch<ApiEnvelope<T>>(`${this.settings.apiBaseUrl()}/${path}`, body); }
     post<T>(path: string, body: unknown) { return this.http.post<ApiEnvelope<T>>(`${this.settings.apiBaseUrl()}/${path}`, body); }
+    image(path: string) {
+        if (!/^media\/[a-z0-9/-]+$/.test(path)) return throwError(() => new Error('Invalid media path'));
+        return this.http.get(`${this.settings.apiBaseUrl()}/${path}`, { responseType: 'blob' });
+    }
 }
 
 export function errorMessage(error: unknown, locale: LocaleService): string {

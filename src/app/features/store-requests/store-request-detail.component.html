@@ -1,0 +1,76 @@
+<a class="back-link" routerLink="/store-requests" queryParamsHandling="preserve"><i [class]="locale.language() === 'ar' ? 'pi pi-arrow-right' : 'pi pi-arrow-left'" aria-hidden="true"></i>{{ locale.t('backToRequests') }}</a>
+<header class="page-heading"><div><p class="eyebrow">{{ locale.t('storeRequests') }}</p><h1>{{ locale.t('requestDetails') }}</h1></div><button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading() || saving()" (click)="refresh()"></button></header>
+@if (updated()) { <div class="detail-notice"><p-message severity="success">{{ locale.t('reviewSaved') }}</p-message></div> }
+@if (loading()) { <div class="surface-panel detail-loading" role="status" aria-busy="true"><span class="sr-only">{{ locale.t('loadingRequestDetails') }}</span><p-skeleton height="6rem"/><p-skeleton height="20rem"/></div> }
+@else if (unavailable()) { <div class="surface-panel empty-state"><i class="pi pi-file-excel" aria-hidden="true"></i><h2>{{ locale.t('requestUnavailable') }}</h2><p>{{ locale.t('requestUnavailableBody') }}</p></div> }
+@else if (error()) { <div class="surface-panel error-panel"><p-message severity="error">{{ error() }}</p-message><button pButton [label]="locale.t('retry')" (click)="refresh()"></button></div> }
+@else if (data(); as request) {
+    <section class="surface-panel profile-banner"><div><p class="eyebrow">{{ locale.t('requestId') }} #{{ request.id }} · {{ locale.t(request.request_type === 'new_store' ? 'newStore' : 'storeChange') }}</p><h2>{{ request.name }}</h2><span class="profile-city"><i class="pi pi-map-marker" aria-hidden="true"></i>{{ request.city?.name ?? locale.t('notProvided') }}</span></div><app-request-status [status]="request.request_status"/></section>
+    <div class="detail-grid">
+        <div class="detail-main">
+            <section class="surface-panel details-card"><h2><i class="pi pi-shop" aria-hidden="true"></i>{{ locale.t('submittedStore') }}</h2><dl class="detail-fields">
+                @for (field of fields; track field.key) {
+                    <div><dt>{{ locale.t(field.label) }}</dt><dd>
+                        @if (field.key === 'url_location') { @if (safeLocation(request.url_location); as link) { <a [href]="link" target="_blank" rel="noopener noreferrer">{{ locale.t('openLocation') }} <i class="pi pi-external-link" aria-hidden="true"></i></a> } @else { {{ request.url_location || locale.t('notProvided') }} } }
+                        @else if (field.key === 'mobile') { <bdi dir="ltr">{{ request.mobile }}</bdi> }
+                        @else { {{ request[field.key] || locale.t('notProvided') }} }
+                    </dd></div>
+                }
+                <div><dt>{{ locale.t('city') }}</dt><dd>{{ request.city?.name ?? locale.t('notProvided') }}</dd></div>
+                <div><dt>{{ locale.t('carBrands') }}</dt><dd>{{ brands(request.company_ids) }}</dd></div>
+            </dl></section>
+            <section class="surface-panel details-card"><h2><i class="pi pi-id-card" aria-hidden="true"></i>{{ locale.t('requestDocuments') }}</h2><p class="section-copy">{{ locale.t('documentsIntro') }}</p>
+                <div class="media-actions">
+                    @if (mediaPath(request.commercial_registration_picture, 'store-requests', request.id); as path) { <app-private-image [path]="path" [label]="locale.t('viewRegistration')"/> }
+                    @else { <p-message severity="secondary">{{ locale.t('registrationUnavailable') }}</p-message> }
+                    @for (picture of request.pictures; track picture.id; let index = $index) { @if (mediaPath(picture.url, 'store-requests', request.id); as path) { <app-private-image [path]="path" [label]="locale.t('storePhoto') + ' ' + (index + 1)"/> } }
+                </div>
+            </section>
+            @if (request.request_type === 'store_change') {
+                <section class="surface-panel details-card"><h2><i class="pi pi-pencil" aria-hidden="true"></i>{{ locale.t('changeReason') }}</h2><p class="review-text">{{ request.change_reason || locale.t('notProvided') }}</p></section>
+            }
+        </div>
+        <aside class="detail-aside">
+            <section class="surface-panel access-card"><span class="access-icon"><i class="pi pi-check-square" aria-hidden="true"></i></span><h2>{{ locale.t('reviewDecision') }}</h2>
+                @if (needsRefresh()) { <p-message severity="warn">{{ mutationError() }}</p-message><button pButton severity="secondary" [label]="locale.t('refreshRequest')" (click)="refresh()"></button> }
+                @else if (request.request_status === 'pending') {
+                    <p>{{ locale.t(request.request_type === 'new_store' ? 'newStoreEffect' : 'storeChangeEffect') }}</p>
+                    <button pButton icon="pi pi-check" [label]="locale.t('approveRequest')" [disabled]="saving()" (click)="ask('accept')"></button>
+                    <button pButton severity="danger" [outlined]="true" icon="pi pi-times" [label]="locale.t('rejectRequest')" [disabled]="saving()" (click)="ask('reject')"></button>
+                } @else { <p>{{ locale.t('reviewComplete') }}</p> }
+                @if (request.rejection_reason) { <h3>{{ locale.t('rejectionReason') }}</h3><p class="review-text">{{ request.rejection_reason }}</p> }
+            </section>
+            <section class="surface-panel details-card"><h2><i class="pi pi-user" aria-hidden="true"></i>{{ locale.t('applicant') }}</h2><dl class="detail-fields compact-fields">
+                <div><dt>{{ locale.t('fullName') }}</dt><dd>{{ request.user?.full_name ?? locale.t('notProvided') }}</dd></div>
+                <div><dt>{{ locale.t('applicantId') }}</dt><dd>{{ request.user ? '#' + request.user.id : locale.t('notProvided') }}</dd></div>
+                <div><dt>{{ locale.t('phoneSearch') }}</dt><dd><bdi dir="ltr">{{ request.user?.mobile ?? locale.t('notProvided') }}</bdi></dd></div>
+            </dl></section>
+            <section class="surface-panel details-card"><h2><i class="pi pi-history" aria-hidden="true"></i>{{ locale.t('reviewRecord') }}</h2><dl class="detail-fields compact-fields">
+                <div><dt>{{ locale.t('submittedUtc') }}</dt><dd>{{ date(request.created_at) }}</dd></div>
+                @if (request.store_id) { <div><dt>{{ locale.t('existingStoreId') }}</dt><dd>#{{ request.store_id }}</dd></div> }
+                @if (request.processed_at) { <div><dt>{{ locale.t('reviewedUtc') }}</dt><dd>{{ date(request.processed_at) }}</dd></div> }
+                @if (request.processed_by) { <div><dt>{{ locale.t('reviewerId') }}</dt><dd>#{{ request.processed_by }}</dd></div> }
+            </dl></section>
+        </aside>
+    </div>
+    @if (request.request_type === 'store_change') {
+        <section class="surface-panel comparison-card"><h2>{{ locale.t('compareChanges') }}</h2><p class="section-copy">{{ locale.t('comparisonIntro') }}</p>
+            @if (comparison().length) {
+                <p class="table-scroll-hint"><i class="pi pi-arrows-h" aria-hidden="true"></i>{{ locale.t('scrollColumns') }}</p>
+                <div class="comparison-scroll" role="region" tabindex="0" [attr.aria-label]="locale.t('compareChanges')"><table class="comparison-table"><thead><tr><th scope="col">{{ locale.t('reviewField') }}</th><th scope="col">{{ locale.t('beforeChange') }}</th><th scope="col">{{ locale.t('proposedChange') }}</th></tr></thead><tbody>
+                    @for (row of comparison(); track row.label) { <tr [class.changed]="row.changed"><th scope="row">{{ locale.t(row.label) }} @if (row.changed) { <span class="changed-label">{{ locale.t('changedValue') }}</span> }</th><td><bdi [dir]="row.label === 'storePhone' ? 'ltr' : 'auto'">{{ row.before }}</bdi></td><td><bdi [dir]="row.label === 'storePhone' ? 'ltr' : 'auto'">{{ row.after }}</bdi></td></tr> }
+                </tbody></table></div>
+            } @else { <p>{{ locale.t('snapshotUnavailable') }}</p> }
+        </section>
+    }
+    <p-dialog [visible]="action() !== null" (visibleChange)="!$event && !saving() && action.set(null)" [modal]="true" [draggable]="false" [resizable]="false" [closable]="!saving()" [closeOnEscape]="!saving()" [dismissableMask]="false" [style]="{width:'500px', maxWidth:'calc(100vw - 32px)'}" [header]="locale.t(action() === 'accept' ? 'confirmApproveRequest' : 'confirmRejectRequest')" [closeAriaLabel]="locale.t('close')">
+        <div class="confirm-content"><strong>{{ request.name }} · #{{ request.id }}</strong><p>{{ locale.t(action() === 'reject' ? 'rejectEffect' : request.request_type === 'new_store' ? 'newStoreEffect' : 'storeChangeEffect') }}</p>
+            @if (action() === 'reject') { <label for="rejection-reason">{{ locale.t('rejectionReason') }}</label><textarea pTextarea id="rejection-reason" [formControl]="reason" [readOnly]="saving()" rows="4" maxlength="255" [attr.aria-invalid]="reason.touched && reason.invalid" aria-describedby="reason-help"></textarea><small id="reason-help">{{ locale.t('reasonHelp') }}</small>@if (reason.touched && reason.invalid) { <p-message severity="error">{{ locale.t('reasonRequired') }}</p-message> } }
+            @if (mutationError()) { <p-message severity="error">{{ mutationError() }}</p-message> }
+        </div>
+        <ng-template #footer><button pButton severity="secondary" [text]="true" [label]="locale.t('cancel')" [disabled]="saving()" (click)="action.set(null)"></button>
+            @if (needsRefresh()) { <button pButton [label]="locale.t('refreshRequest')" (click)="refresh()"></button> }
+            @else { <button pButton [severity]="action() === 'reject' ? 'danger' : 'primary'" [label]="locale.t(action() === 'accept' ? 'approveRequest' : 'rejectRequest')" [loading]="saving()" [disabled]="saving()" (click)="confirm()"></button> }
+        </ng-template>
+    </p-dialog>
+}
