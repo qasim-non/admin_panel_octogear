@@ -1,0 +1,28 @@
+<div class="page-heading"><div><p class="eyebrow">{{ locale.t('workspace') }}</p><h1>{{ locale.t('supportChats') }}</h1><p>{{ locale.t('supportIntro') }}</p></div><p-button icon="pi pi-refresh" [ariaLabel]="locale.t('refresh')" [label]="locale.t('refresh')" severity="secondary" [disabled]="loading()" (onClick)="refresh()" /></div>
+<section class="surface-panel">
+    <form class="support-filters" [formGroup]="form" (ngSubmit)="apply()">
+        <div class="field"><label for="support-search">{{ locale.t('supportSearch') }}</label><input id="support-search" pInputText formControlName="search" maxlength="100" /></div>
+        <div class="field"><label for="support-status">{{ locale.t('supportStatus') }}</label><p-select inputId="support-status" [ariaLabel]="locale.t('supportStatus')" formControlName="status" [options]="statuses()" optionLabel="label" optionValue="value" /></div>
+        <div class="field"><label for="support-type">{{ locale.t('supportAccount') }}</label><p-select inputId="support-type" [ariaLabel]="locale.t('supportAccount')" formControlName="type" [options]="types()" optionLabel="label" optionValue="value" /></div>
+        <div class="field"><label for="support-unread">{{ locale.t('supportReadFilter') }}</label><p-select inputId="support-unread" [ariaLabel]="locale.t('supportReadFilter')" formControlName="unread" [options]="unreadOptions()" optionLabel="label" optionValue="value" /></div>
+        <div class="support-actions"><p-button type="submit" [ariaLabel]="locale.t('applyFilters')" [label]="locale.t('applyFilters')" [disabled]="form.invalid" /><p-button type="button" [ariaLabel]="locale.t('clearFilters')" [label]="locale.t('clearFilters')" severity="secondary" (onClick)="clear()" /></div>
+    </form>
+    @if (loading()) { <p role="status" class="support-notice">{{ locale.t('supportLoading') }}</p> }
+    @else if (error()) { <div class="error-panel" role="alert"><p>{{ error() }}</p><p-button [ariaLabel]="locale.t('retry')" [label]="locale.t('retry')" (onClick)="refresh()" /></div> }
+    @else if (!rows().length) { <div class="empty-state"><i class="pi pi-comments" aria-hidden="true"></i><h2>{{ locale.t('supportEmpty') }}</h2><p>{{ locale.t('supportEmptyHint') }}</p></div> }
+    @else {
+        <p class="support-notice">{{ locale.t('supportLatestFirst') }} · {{ number(meta()?.total ?? 0) }} {{ locale.t('supportConversations') }}</p>
+        <p class="support-notice support-scroll-hint">{{ locale.t('scrollColumns') }}</p><div role="region" tabindex="0" [attr.aria-label]="locale.t('supportListRegion')" class="support-table">
+        <p-table [value]="rows()" [tableStyle]="{'min-width': '48rem'}">
+            <ng-template #header><tr><th>{{ locale.t('supportAccount') }}</th><th>{{ locale.t('supportLastMessage') }}</th><th>{{ locale.t('supportStatus') }}</th><th>{{ locale.t('supportActivity') }}</th><th>{{ locale.t('supportUnread') }}</th><th><span class="sr-only">{{ locale.t('supportView') }}</span></th></tr></ng-template>
+            <ng-template #body let-row><tr>
+                <td><a class="support-link" [routerLink]="['/chats', row.id]" [queryParams]="query()" [attr.aria-label]="locale.t('supportView') + ' #' + row.id + ': ' + (row.user.name || locale.t('notProvided'))">{{ row.user.name || locale.t('notProvided') }}</a><small>{{ locale.t(row.user.type === 'customer' ? 'customers' : 'providers') }} · #{{ row.user.id }}</small><small dir="ltr">{{ row.user.mobile || '—' }}</small></td>
+                <td><span class="support-preview">{{ row.last_message?.content || '—' }}</span></td>
+                <td><p-tag [value]="locale.t(row.status === 'open' ? 'supportOpen' : 'supportClosed')" [severity]="row.status === 'open' ? 'success' : 'secondary'" /></td>
+                <td>{{ date(row.last_activity_at) }}</td><td>@if (row.unread_count) { <span class="support-unread" [attr.aria-label]="locale.t('supportUnread') + ': ' + number(row.unread_count)">{{ number(row.unread_count) }}</span> } @else { <span>—</span> }</td>
+                <td><a [routerLink]="['/chats', row.id]" [queryParams]="query()" class="support-link">{{ locale.t('supportView') }} #{{ row.id }}</a></td>
+            </tr></ng-template>
+        </p-table></div>
+        <div class="support-pagination"><span>{{ locale.t('pageNumber') }} {{ number(meta()?.current_page ?? 1) }} / {{ number(meta()?.last_page ?? 1) }}</span><p-button icon="pi pi-angle-left" [ariaLabel]="locale.t('previousPage')" severity="secondary" [disabled]="filters().page <= 1" (onClick)="changePage(filters().page - 1)" /><p-button icon="pi pi-angle-right" [ariaLabel]="locale.t('nextPage')" severity="secondary" [disabled]="filters().page >= (meta()?.last_page ?? 1)" (onClick)="changePage(filters().page + 1)" /></div>
+    }
+</section>

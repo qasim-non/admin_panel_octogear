@@ -618,3 +618,86 @@ provider/store/order/payment flows. English desktop and Arabic mobile dialog
 screenshots were inspected after animations completed; forms fit the viewport.
 Web diff whitespace checks passed. Laravel route listing confirmed all six CRUD
 routes and the new country-options route are registered locally.
+
+
+### 2026-10-22: Support chat dashboard
+
+The owner requested the web phase of the previously implemented API/Flutter support
+feature. The dashboard now has a guarded, lazy Chats workspace for the existing
+single conversation per account. The queue defaults to open and provides combined
+search (conversation ID/name/mobile), account role, status and unread filters,
+20-row pagination, URL retention and recoverable empty/error states. Both customer
+and provider accounts use the same support flow.
+
+Details show cursor-paginated text history, account links and activity, support-team
+unread counts, replies and an on-demand paginated status audit. Explicit confirmed
+close/reopen actions reuse the server's expected version. Closing preserves history
+and removes the row from the open queue; account reopening returns it. Replies do
+not automatically close issues. Text is escaped, limited to 2,000 Unicode code
+points, and transmitted through the existing authenticated HTTP client.
+
+One route-scoped native Reverb WebSocket connection serves queue and details.
+Private authorization uses the current admin token. Versioned snapshots and message
+ID merging handle stale/duplicate events. HTTP-only forward cursors recover every
+missed page after reconnect; live event IDs never skip unknown history. Background
+queue updates preserve filter edits and allow slow requests to complete under
+continuous traffic. Hidden/offline pages suspend the socket; manual refresh remains
+available without realtime. No interval polling or added npm dependency.
+
+Uncertain reply delivery preserves the exact text/UUID in memory across navigation,
+including receipt replay after closure. Definite rejection keeps drafts editable.
+Logout/account changes clear drafts; full reloads discard them. Status writes never
+auto-retry. Read receipts require foreground focus, the loaded latest boundary and
+actual viewport visibility, after a short dwell. Failed acknowledgements retain the
+server unread count and offer retry. The team's read position remains shared.
+
+The UI follows the existing navy/yellow theme, typed English/Arabic dictionaries,
+RTL and keyboard conventions. Mobile names/actions stack clearly; tables scroll
+locally and account-name links make conversations reachable without scrolling to
+the final column. Desktop/Arabic/mobile screenshots were inspected. Initial browser
+checks identified missing accessible names and transition-sensitive test locators;
+both were corrected. Viewport-aware read behavior received a regression test.
+
+Read docs/SUPPORT_CHAT_STEP.md for the Angular boundaries, existing Laravel
+route → middleware/policy → Form Request → controller → service/repository → resource
+flow, payloads, retries and operational requirements. README and architecture are
+updated. The README's pre-existing encoded byte tail was preserved and checked.
+
+Verification: final Angular typecheck and the two-worker production build passed.
+The complete browser suite ran 95 tests: 93 passed; two failed during browser-context
+cleanup with ENOSPC while recording traces (Payments error recovery and Support live
+filter retention). Their application assertions did not fail. Both affected tests
+passed on a targeted rerun of the same build with tracing disabled (2/2). All 16 new
+support scenarios therefore passed across the full run and targeted rerun; the full
+trace-enabled run itself was not green. C: had about 48 MB free at diagnosis, then
+about 98 MB after test cleanup. No unrelated cache/profile/user files were deleted.
+Tracked diff checks and explicit new-file whitespace checks passed.
+
+No Laravel, Flutter, database, dependency lockfile, retained account, real support
+message or deployment was changed. Existing API/migration/Reverb/queue workers are
+prerequisites. Browser tests use synthetic HTTP/WebSocket traffic on preview port
+4202 and leave the user's development server on 4200 intact. A live authenticated
+admin-to-device delivery test remains unperformed; backend tests were not rerun
+because this slice changes only the dashboard and its documentation/tests.
+
+### 2026-10-22: Realtime configuration request reuse
+
+The owner reported repeated GET admin/support/realtime requests and requested
+refresh-driven configuration loading. The socket's retry loop previously fetched
+configuration on every attempt, and visibility events could overlap the initial
+request. SupportRealtimeConfig now shares one in-memory attempt per current admin
+token/API base across Chats navigation. Success, disabled and failure results are
+retained. Page reload/session changes start a fresh attempt; explicit Reconnect
+clears it. Configuration errors wait for manual recovery. Socket reconnects still
+use exponential backoff, cached settings, private authorization and HTTP gap recovery.
+A connecting-state guard prevents overlapping connection attempts. No backend change.
+
+Validation: Angular typecheck and production build passed; all 20 support browser
+tests passed with tracing disabled due to the host's previously observed low disk
+space. Four new tests cover navigation, disabled settings/manual refresh, failed
+configuration recovery and overlapping visibility events; the existing reconnect
+test now asserts one configuration GET. The first test attempt was stopped after
+the owner's concurrent hosted API configuration change invalidated the old local
+fixture assumption. Tests now explicitly intercept app-config.json as well as API
+and socket traffic. The owner's public/app-config.json was preserved. No real server
+login or support messages were used. Feature/architecture docs and diff checks updated.

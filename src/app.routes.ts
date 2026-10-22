@@ -5,6 +5,10 @@ export const appRoutes: Routes = [
     { path: 'login', canActivate: [guestGuard], loadComponent: () => import('./app/features/auth/login.component').then(m => m.LoginComponent) },
     { path: '', canActivate: [authGuard], canActivateChild: [authGuard], loadComponent: () => import('./app/layout/component/app.layout').then(m => m.AppLayout), children: [
         { path: '', pathMatch: 'full', redirectTo: 'overview' },
+        { path: 'chats', loadComponent: () => import('./app/features/support/support-workspace.component').then(m => m.SupportWorkspaceComponent), children: [
+            { path: '', pathMatch: 'full', loadComponent: () => import('./app/features/support/support-directory.component').then(m => m.SupportDirectoryComponent) },
+            { path: ':id', loadComponent: () => import('./app/features/support/support-detail.component').then(m => m.SupportDetailComponent) }
+        ] },
         { path: 'overview', loadComponent: () => import('./app/features/overview/overview.component').then(m => m.OverviewComponent) },
         { path: 'car-companies', data: { catalogKind: 'companies' }, loadComponent: () => import('./app/features/vehicle-catalog/vehicle-catalog.component').then(m => m.VehicleCatalogComponent) },
         { path: 'car-models', data: { catalogKind: 'models' }, loadComponent: () => import('./app/features/vehicle-catalog/vehicle-catalog.component').then(m => m.VehicleCatalogComponent) },

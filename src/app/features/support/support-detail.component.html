@@ -1,0 +1,57 @@
+<a routerLink="/chats" [queryParams]="query()" class="support-back"><i class="pi pi-arrow-left" aria-hidden="true"></i>{{ locale.t('supportBack') }}</a>
+@if (invalid()) { <div class="error-panel" role="alert">{{ locale.t('supportUnavailable') }}</div> }
+@else if (thread.loading()) { <p role="status" class="support-notice">{{ locale.t('supportLoading') }}</p> }
+@else {
+    @if (thread.error()) { <div class="error-panel" role="alert"><p>{{ thread.error() }}</p><p-button [ariaLabel]="locale.t('retry')" [label]="locale.t('retry')" [disabled]="thread.syncing()" (onClick)="thread.refresh()" /></div> }
+    @if (thread.conversation(); as chat) {
+        <div class="page-heading support-heading"><div><p class="eyebrow">{{ locale.t('supportChats') }} #{{ chat.id }}</p><h1>{{ chat.user.name || locale.t('notProvided') }}</h1><p>{{ locale.t('supportTeamHint') }}</p></div><div class="support-actions"><p-tag [value]="locale.t(chat.status === 'open' ? 'supportOpen' : 'supportClosed')" [severity]="chat.status === 'open' ? 'success' : 'secondary'" /><p-button icon="pi pi-refresh" [ariaLabel]="locale.t('refresh')" [label]="locale.t('refresh')" severity="secondary" [disabled]="thread.syncing()" (onClick)="thread.refresh()" /><p-button [icon]="chat.status === 'open' ? 'pi pi-check' : 'pi pi-replay'" [ariaLabel]="locale.t(chat.status === 'open' ? 'supportCloseAction' : 'supportReopenAction')" [label]="locale.t(chat.status === 'open' ? 'supportCloseAction' : 'supportReopenAction')" [disabled]="thread.changingStatus() || thread.sending() || !!thread.pendingKey() || thread.statusBlocked()" (onClick)="askStatus()" /></div></div>
+        <div class="support-detail-grid">
+            <section class="surface-panel support-chat" [attr.aria-label]="locale.t('supportConversation')">
+                <div class="support-chat-bar"><strong>{{ locale.t('supportConversation') }}</strong><span>{{ locale.t('supportUnread') }}: {{ number(chat.unread_count) }}</span></div>
+                <div #timeline class="support-timeline" tabindex="0" role="region" [attr.aria-label]="locale.t('supportMessages')" (scroll)="onScroll()">
+                    @if (thread.hasOlder()) { <div class="support-history-button"><p-button [ariaLabel]="locale.t('supportLoadOlder')" [label]="locale.t('supportLoadOlder')" severity="secondary" [loading]="thread.olderLoading()" (onClick)="older()" /></div> }
+                    @if (thread.historyError()) { <p class="support-inline-error" role="alert">{{ thread.historyError() }}</p> }
+                    @for (message of thread.messages(); track message.id) {
+                        <article class="support-message" [class.from-admin]="message.sender_kind === 'admin'" [attr.data-message-id]="message.id">
+                            <strong>{{ message.sender_kind === 'admin' ? locale.t('supportTeam') : chat.user.name || locale.t('supportAccount') }}</strong>
+                            <p dir="auto">{{ message.content }}</p><time [attr.datetime]="message.created_at">{{ date(message.created_at) }}</time>
+                        </article>
+                    } @empty { <p class="support-notice">{{ locale.t('supportNoMessages') }}</p> }
+                    <span #latestEdge class="support-latest-edge" aria-hidden="true"></span>
+                </div>
+                @if (!atBottom()) { <p-button [ariaLabel]="locale.t('supportLatest')" [label]="locale.t('supportLatest')" icon="pi pi-arrow-down" severity="secondary" (onClick)="toLatest()" /> }
+                <span class="sr-only" role="status">{{ locale.t('supportMessageCount') }}: {{ number(thread.messages().length) }}</span>
+                @if (thread.syncing()) { <p role="status" class="support-notice">{{ locale.t('supportSyncing') }}</p> }
+                @if (thread.readError()) { <div class="support-inline-error" role="alert"><p>{{ locale.t('supportReadFailed') }}</p><p-button [ariaLabel]="locale.t('retry')" [label]="locale.t('retry')" severity="secondary" [disabled]="!active() || !atBottom() || !latestVisible() || thread.reading()" (onClick)="retryRead()" /></div> }
+                @if (thread.actionError()) { <p role="alert" class="support-inline-error">{{ thread.actionError() }}</p> }
+                @if (chat.status === 'closed') { <div class="support-closed"><i class="pi pi-check-circle" aria-hidden="true"></i><p>{{ locale.t('supportClosedHint') }}</p></div> }
+                @if (chat.status === 'open' || thread.pendingKey()) {
+                    <form class="support-composer" (submit)="$event.preventDefault(); send()">
+                        <label for="support-reply">{{ locale.t('supportReply') }}</label>
+                        <textarea id="support-reply" rows="3" dir="auto" [value]="thread.text()" [readOnly]="thread.sending() || !!thread.pendingKey()" [attr.aria-describedby]="'support-reply-hint'" (input)="edit($event)"></textarea>
+                        <div class="support-composer-footer"><span id="support-reply-hint" [class.support-inline-error]="count() > 2000">{{ number(count()) }} / {{ number(2000) }} · {{ locale.t('supportTextOnly') }}</span><p-button type="submit" icon="pi pi-send" [ariaLabel]="locale.t(thread.pendingKey() && !thread.sending() ? 'supportRetrySend' : 'supportSend')" [label]="locale.t(thread.pendingKey() && !thread.sending() ? 'supportRetrySend' : 'supportSend')" [loading]="thread.sending()" [disabled]="!count() || count() > 2000 || thread.changingStatus()" /></div>
+                        @if (thread.pendingKey() && !thread.sending()) { <p class="support-notice">{{ locale.t('supportRetryHint') }}</p> }
+                    </form>
+                }
+            </section>
+            <aside class="surface-panel support-details"><h2>{{ locale.t('supportDetails') }}</h2><dl>
+                <dt>{{ locale.t('supportAccount') }}</dt><dd><a [routerLink]="[chat.user.type === 'customer' ? '/customers' : '/providers', chat.user.id]">{{ locale.t(chat.user.type === 'customer' ? 'customers' : 'providers') }} #{{ chat.user.id }}</a></dd>
+                <dt>{{ locale.t('supportMobile') }}</dt><dd dir="ltr">{{ chat.user.mobile || '—' }}</dd><dt>{{ locale.t('supportCreated') }}</dt><dd>{{ date(chat.created_at) }}</dd><dt>{{ locale.t('supportActivity') }}</dt><dd>{{ date(chat.last_activity_at) }}</dd>
+                @if (chat.closed_at) { <dt>{{ locale.t('supportClosedAt') }}</dt><dd>{{ date(chat.closed_at) }}</dd> }
+                @if (chat.reopened_at) { <dt>{{ locale.t('supportReopenedAt') }}</dt><dd>{{ date(chat.reopened_at) }}</dd> }
+            </dl><p class="support-notice">{{ locale.t('supportUtc') }}</p>
+            <button pButton type="button" severity="secondary" [attr.aria-expanded]="auditOpen()" (click)="toggleAudit()"><i class="pi pi-history" aria-hidden="true"></i><span>{{ locale.t('supportAudit') }}</span></button>
+            @if (auditOpen()) {
+                @if (thread.auditError()) { <div role="alert"><p>{{ thread.auditError() }}</p><p-button [ariaLabel]="locale.t('retry')" [label]="locale.t('retry')" (onClick)="thread.loadAudit(thread.auditPage() === 0)" /></div> }
+                <ol class="support-audit">@for (event of thread.audit(); track event.id) { <li><strong>{{ locale.t(event.to_status === 'closed' ? 'supportClosed' : 'supportReopened') }}</strong><span>{{ locale.t(event.actor_kind === 'admin' ? 'supportAdmin' : 'supportAccount') }} #{{ event.actor_id }}</span><time>{{ date(event.created_at) }}</time></li> } @empty { @if (!thread.auditLoading()) { <li>{{ locale.t('supportNoEvents') }}</li> } }</ol>
+                @if (thread.auditLoading()) { <p role="status">{{ locale.t('supportLoading') }}</p> }
+                @if (thread.auditHasMore()) { <p-button [ariaLabel]="locale.t('supportMoreEvents')" [label]="locale.t('supportMoreEvents')" severity="secondary" [disabled]="thread.auditLoading()" (onClick)="thread.loadAudit()" /> }
+            }
+            </aside>
+        </div>
+    }
+}
+<p-dialog [visible]="!!confirmation()" (visibleChange)="!$event && confirmation.set(null)" [modal]="true" [header]="locale.t(confirmationStatus() === 'closed' ? 'supportConfirmClose' : 'supportConfirmReopen')" [style]="{width: '30rem', maxWidth: 'calc(100vw - 2rem)'}" [draggable]="false" [resizable]="false">
+    <p>{{ locale.t(confirmationStatus() === 'closed' ? 'supportCloseExplanation' : 'supportReopenExplanation') }}</p>
+    <ng-template #footer><p-button [ariaLabel]="locale.t('cancel')" [label]="locale.t('cancel')" severity="secondary" (onClick)="confirmation.set(null)" /><p-button [ariaLabel]="locale.t(confirmationStatus() === 'closed' ? 'supportCloseAction' : 'supportReopenAction')" [label]="locale.t(confirmationStatus() === 'closed' ? 'supportCloseAction' : 'supportReopenAction')" (onClick)="confirmStatus()" /></ng-template>
+</p-dialog>

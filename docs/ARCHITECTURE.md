@@ -148,3 +148,23 @@ Recorded amounts are authoritative; `shared/money.ts` formats SAR minor units fo
 both Payments and Orders. Retained archived records are explicit. Order navigation
 preserves payment filters and provides a return link; the order payment card links
 to all retained records for that order. No charge/refund operation is triggered.
+
+## Support conversations
+
+Read `SUPPORT_CHAT_STEP.md` before changing `features/support`. The guarded
+Chats workspace owns one route-scoped native WebSocket adapter and nested queue/
+detail routes. SupportApi validates existing Laravel envelopes through ApiClient.
+SupportThread coordinates versioned summaries, cursor recovery, writes and shared
+team read receipts; the component owns scroll visibility and confirmations.
+Uncertain replies retain their UUID and exact text in session-scoped memory, never
+auto-retry, and survive route navigation. Drafts clear on account changes/logout.
+The list retains filters in the URL and leaves filtering/order to the server.
+Realtime is event-driven; disabled connections offer explicit refresh. No background
+HTTP polling or new npm dependency is introduced. English/Arabic, RTL and narrow
+screens use the shared theme. Browser tests mock both HTTP and WebSocket traffic.
+
+SupportRealtimeConfig retains one configuration attempt per admin token/API base in
+memory. Automatic socket reconnects and route/visibility changes reuse it. Explicit
+Reconnect clears it; page reload or session changes start a new attempt. Failed or
+disabled configuration is not automatically downloaded again. This cache is separate
+from the route-scoped socket and stores no data in browser storage.
