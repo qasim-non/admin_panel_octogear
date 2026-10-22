@@ -766,3 +766,21 @@ the owner's concurrent hosted API configuration change invalidated the old local
 fixture assumption. Tests now explicitly intercept app-config.json as well as API
 and socket traffic. The owner's public/app-config.json was preserved. No real server
 login or support messages were used. Feature/architecture docs and diff checks updated.
+
+### 2026-10-22: Firebase Hosting GitHub deployment setup
+
+Configured Firebase project octogear-1d72b for the Angular output at
+dist/octogear-admin/browser, with index.html fallback for frontend routes.
+GitHub Actions deploys main to the live channel and same-repository pull requests
+to previews. Both workflows select Node 22, install from the lockfile using npm 11,
+run typechecking, and build with two workers before deployment. Credentials remain
+in the GitHub Actions secret created by the Firebase CLI; no key is committed.
+The existing public API configuration is preserved.
+
+Rollout prerequisite: deploy the admin-security backend/migration and restart
+realtime workers as described in docs/ADMIN_ACCOUNTS_STEP.md before publishing
+the frontend. The owner explicitly chose to publish the frontend first and update Laravel later;
+protected dashboard access may remain blocked until the backend supplies permissions.
+
+Validation: npm run typecheck and the two-worker production build passed.
+Staged diff whitespace check passed. Live authenticated API flows are unverified.
