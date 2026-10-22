@@ -26,14 +26,14 @@
             </dl></section>
         </div>
         <aside class="detail-aside">
-            <section class="surface-panel access-card"><span class="access-icon"><i class="pi pi-shield" aria-hidden="true"></i></span><h2>{{ locale.t('accountAccess') }}</h2><p>{{ locale.t(copy.accessIntro) }}</p>
+            @if (session.can('users.manage')) { <section class="surface-panel access-card"><span class="access-icon"><i class="pi pi-shield" aria-hidden="true"></i></span><h2>{{ locale.t('accountAccess') }}</h2><p>{{ locale.t(copy.accessIntro) }}</p>
                 @if (needsRefresh()) { <p-message severity="warn">{{ mutationError() }}</p-message><button pButton severity="secondary" [label]="locale.t(copy.refresh)" (click)="refresh()"></button> }
                 @else { <button pButton [severity]="customer.status === 'blocked' ? 'primary' : 'danger'" [outlined]="customer.status !== 'blocked'" [icon]="customer.status === 'blocked' ? 'pi pi-lock-open' : 'pi pi-ban'" [label]="locale.t(customer.status === 'blocked' ? copy.unblock : copy.block)" [disabled]="saving()" (click)="requestStatusChange()"></button> }
-            </section>
+            </section> }
             <section class="surface-panel customer-orders"><div><span>{{ locale.t(copy.metric) }}</span><i class="pi pi-box" aria-hidden="true"></i></div><strong>{{ number(config.kind === 'providers' ? customer.stores_count : customer.orders_count) }}</strong><p>{{ locale.t(copy.metricHint) }}</p></section>
         </aside>
     </div>
-    @if (config.kind === 'providers') { <app-provider-stores [providerId]="customer.id"/> }
+    @if (config.kind === 'providers' && session.can('stores.view')) { <app-provider-stores [providerId]="customer.id"/> }
     <p-dialog [visible]="confirmVisible()" (visibleChange)="confirmVisible.set($event)" [modal]="true" [draggable]="false" [resizable]="false" [closable]="!saving()" [closeOnEscape]="!saving()" [dismissableMask]="false"
         [style]="{width: '440px', maxWidth: 'calc(100vw - 32px)'}" [header]="locale.t(customer.status === 'blocked' ? copy.confirmUnblock : copy.confirmBlock)" [closeAriaLabel]="locale.t('close')">
         <div class="confirm-content"><strong>{{ customer.full_name }}</strong><span>#{{ customer.id }} · <bdi dir="ltr">{{ customer.mobile }}</bdi></span><p>{{ locale.t(customer.status === 'blocked' ? copy.unblockExplanation : copy.blockExplanation) }}</p>

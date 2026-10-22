@@ -1,6 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page } from './fixtures';
 
-const profile = { employee_id: 1, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'admin', status: 'active' };
+const profile = { employee_id: 1, permissions: allPermissions, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'admin', status: 'active' };
 const overview = { users: {total: 38, customers: 31, providers: 7, blocked: 0}, stores: {total: 9, active: 8, inactive: 1, pending_requests: 3}, orders: {total: 26, pending: 5, awaiting_payment: 3, paid: 7, completed: 10, cancelled: 1} };
 const envelope = (data: unknown) => ({ success: true, message: 'OK', data });
 

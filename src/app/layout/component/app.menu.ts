@@ -1,11 +1,26 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LocaleService } from '../../core/locale.service';
+import { SessionService } from '../../core/session.service';
+import { TextKey } from '../../core/i18n/en';
 
-@Component({
- selector: 'app-menu', imports: [RouterLink, RouterLinkActive],
- styles: [':host { display: block; }'],
- template: `<nav id="main-navigation" [attr.aria-label]="locale.t('workspace')"><p class="nav-label">{{ locale.t('workspace') }}</p><ul class="octogear-menu"><li><a routerLink="/overview" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-th-large" aria-hidden="true"></i>{{ locale.t('overview') }}</a></li><li><a routerLink="/customers" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-users" aria-hidden="true"></i>{{ locale.t('customers') }}</a></li><li><a routerLink="/providers" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-briefcase" aria-hidden="true"></i>{{ locale.t('providers') }}</a></li><li><a routerLink="/store-requests" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-clipboard" aria-hidden="true"></i>{{ locale.t('storeRequests') }}</a></li><li><a routerLink="/stores" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-shop" aria-hidden="true"></i>{{ locale.t('stores') }}</a></li><li><a routerLink="/orders" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-box" aria-hidden="true"></i>{{ locale.t('orders') }}</a></li><li><a routerLink="/payments" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-wallet" aria-hidden="true"></i>{{ locale.t('payments') }}</a></li><li><a routerLink="/car-companies" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-building" aria-hidden="true"></i>{{ locale.t('carCompanies') }}</a></li><li><a routerLink="/car-models" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-car" aria-hidden="true"></i>{{ locale.t('carModels') }}</a></li><li><a routerLink="/chats" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i class="pi pi-comments" aria-hidden="true"></i>{{ locale.t('supportChats') }}</a></li></ul></nav>`
-})
-export class AppMenu { readonly locale = inject(LocaleService); }
-
+@Component({ selector: 'app-menu', imports: [RouterLink, RouterLinkActive], styles: [':host { display: block; }'],
+    template: `<nav id="main-navigation" [attr.aria-label]="locale.t('workspace')"><p class="nav-label">{{ locale.t('workspace') }}</p><ul class="octogear-menu">
+    @for (item of items; track item.path) { @if (session.can(item.permission)) { <li><a [routerLink]="item.path" routerLinkActive="active-route" ariaCurrentWhenActive="page"><i [class]="'pi ' + item.icon" aria-hidden="true"></i>{{ locale.t(item.label) }}</a></li> } }
+    </ul></nav>` })
+export class AppMenu {
+    readonly locale = inject(LocaleService); readonly session = inject(SessionService);
+    readonly items: { path: string; label: TextKey; icon: string; permission: string }[] = [
+        { path: '/overview', label: 'overview', icon: 'pi-th-large', permission: 'dashboard.view' },
+        { path: '/customers', label: 'customers', icon: 'pi-users', permission: 'users.view' },
+        { path: '/providers', label: 'providers', icon: 'pi-briefcase', permission: 'users.view' },
+        { path: '/store-requests', label: 'storeRequests', icon: 'pi-clipboard', permission: 'requests.view' },
+        { path: '/stores', label: 'stores', icon: 'pi-shop', permission: 'stores.view' },
+        { path: '/orders', label: 'orders', icon: 'pi-box', permission: 'orders.view' },
+        { path: '/payments', label: 'payments', icon: 'pi-wallet', permission: 'payments.view' },
+        { path: '/chats', label: 'supportChats', icon: 'pi-comments', permission: 'support.access' },
+        { path: '/sub-admins', label: 'subAdmins', icon: 'pi-user-edit', permission: 'admins.view' },
+        { path: '/car-companies', label: 'carCompanies', icon: 'pi-building', permission: 'catalog.view' },
+        { path: '/car-models', label: 'carModels', icon: 'pi-car', permission: 'catalog.view' }
+    ];
+}

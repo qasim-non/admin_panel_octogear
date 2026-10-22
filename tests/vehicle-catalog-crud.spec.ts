@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page } from './fixtures';
 
 async function setup(page: Page, start = '/car-companies') {
     const state = { reads: 0, options: 0, countries: 0, status: 200, writes: [] as { method: string; body: any }[],
@@ -12,7 +13,7 @@ async function setup(page: Page, start = '/car-companies') {
         const request = route.request(), path = new URL(request.url()).pathname, method = request.method(), ar = request.headers()['accept-language'] === 'ar';
         if (method === 'OPTIONS') return route.fulfill({ status: 204 });
         if (path.endsWith('/profile/language')) return route.fulfill({ json: { success: true, data: request.postDataJSON() } });
-        if (path.endsWith('/profile')) return route.fulfill({ json: { success: true, data: { employee_id: 1, name: 'Admin', status: 'active' } } });
+        if (path.endsWith('/profile')) return route.fulfill({ json: { success: true, data: { employee_id: 1, permissions: allPermissions, name: 'Admin', status: 'active' } } });
         if (path.endsWith('/catalog-countries/options')) { state.countries++; return route.fulfill({ json: { success: true, data: [{ id: 1, name_en: 'Japan', name_ar: 'اليابان' }] } }); }
         if (path.endsWith('/car-companies/options')) { state.options++; return route.fulfill({ json: { success: true, data: state.companies } }); }
         const companies = path.includes('car-companies'), rows: any[] = companies ? state.companies : state.models;

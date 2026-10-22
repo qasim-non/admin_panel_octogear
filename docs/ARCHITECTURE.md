@@ -1,5 +1,26 @@
 # Angular application guide
 
+## Current admin security contract (2026-10-22)
+
+Read `ADMIN_ACCOUNTS_STEP.md` before authentication, role, staff or settings work.
+This supersedes the first-slice limitations below. Login now returns either a
+normal token or a short-lived password-setup challenge. A new/reset admin must
+choose their private password before a normal token is issued. Challenges and
+temporary passwords remain in memory; never persist them in browser storage.
+
+Profile permissions drive menu visibility, route guards and action controls;
+Laravel independently enforces its central permission matrix on every request.
+Missing permission data fails closed. Every role lands on its first permitted page.
+`features/admins` owns staff listing/editor/history and personal settings; the shared
+password field owns reveal, cryptographic 16-character generation and explicit copy.
+Personal password changes revoke all sessions. Database-backed language preferences
+reuse the existing flow. Sidebar ends Chats, Sub-admins, Car companies, Car models.
+
+Deploy the backend and additive security migration before the web. No hosted release
+was performed. Email invitations/recovery and MFA remain deferred. Browser fixtures
+explicitly mock runtime configuration and API responses, regardless of the owner's
+configured API address. Actual checks and rollout limits are in PROJECT_DOCUMENTATION.md.
+
 ## Stack and provenance
 
 Angular 21 standalone components, PrimeNG 21 with an OctoGear Aura preset, and the Angular Sakai layout. Use the committed package-lock.json for exact installed versions. The original Sakai source is https://github.com/primefaces/sakai-ng at commit `96d71496d685b5c110efd2875abaa2bf89a56ad2`; layout assets came from its pinned submodule commit `eaa70ece4cfa9aeb8f60b36dce5a422b6bae8003`. Keep `SAKAI_LICENSE.md` and the bundled font licenses. The demo pages, stock images, theme configurator, sample business data, and unrelated dependencies are excluded from the delivered app.

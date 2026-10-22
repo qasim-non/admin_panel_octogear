@@ -1,3 +1,4 @@
+import { SessionService } from '../../core/session.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -17,6 +18,7 @@ import { OrderStatusComponent } from './order-status.component';
 @Component({ selector: 'app-order-detail', imports: [RouterLink, ButtonModule, MessageModule, SkeletonModule, TagModule, PrivateImageComponent, OrderStatusComponent],
     templateUrl: './order-detail.component.html', styleUrls: ['../users/users.scss', './orders.scss'] })
 export class OrderDetailComponent {
+    readonly session = inject(SessionService);
     readonly locale = inject(LocaleService); private readonly route = inject(ActivatedRoute); private readonly api = inject(OrderApi);
     private readonly reload = signal(0); readonly data = signal<AdminOrder | null>(null); readonly loading = signal(true); readonly error = signal(''); readonly unavailable = signal(false);
     readonly part = orderPart; readonly imagePath = orderImagePath;

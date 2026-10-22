@@ -1,5 +1,10 @@
 # Support conversations in the dashboard
 
+Authorization update (2026-10-22): read `ADMIN_ACCOUNTS_STEP.md`. Chat navigation,
+HTTP/socket authorization and delivery-time recipients now require `support.access`.
+Only active, fully configured Administrator/Manager/Support employee roles qualify.
+The original implementation record below describes the earlier dashboard slice.
+
 Implemented 2026-10-22 for the existing Laravel support feature. Read this guide
 before changing `src/app/features/support`. The API contract remains in
 `../OctoGear-api/SUPPORT_CHAT.md`; no API routes, migrations or mobile files were

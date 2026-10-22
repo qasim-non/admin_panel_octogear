@@ -6,7 +6,7 @@ import { ApiClient } from './api-client';
 import { AppSettings } from './app-settings';
 import { Language, LocaleService } from './locale.service';
 
-export interface AdminProfile { employee_id: number; name: string; email: string; assigned_role: string; status: string; preferred_language?: Language | null; }
+export interface AdminProfile { employee_id: number; name: string; email: string; assigned_role: string; status: string; preferred_language?: Language | null; permissions: string[]; password_changed_at?: string | null; }
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -18,6 +18,8 @@ export class SessionService {
     private restoring = false;
     private bearer: string | null = null;
     private generation = 0;
+    private setupChallenge: string | null = null;
+    readonly needsPasswordSetup = signal(false);
     readonly profile = signal<AdminProfile | null>(null);
     readonly ended = signal(false);
     readonly busy = signal(false);
@@ -25,6 +27,38 @@ export class SessionService {
     readonly languageSaving = signal(false);
     readonly languageSaveFailed = signal(false);
     token(): string | null { return this.bearer; }
+    can(permission: string): boolean { return this.profile()?.permissions?.includes(permission) ?? false; }
+    home(): string {
+        const pages = [['dashboard.view', '/overview'], ['users.view', '/customers'], ['support.access', '/chats'], ['admins.view', '/sub-admins'], ['catalog.view', '/car-companies']];
+        return pages.find(([permission]) => this.can(permission))?.[1] ?? '/settings';
+    }
+    cancelSetup(): void { this.setupChallenge = null; this.needsPasswordSetup.set(false); }
+
+    async completePasswordSetup(password: string, password_confirmation: string): Promise<boolean> {
+        if (this.busy() || !this.setupChallenge) return false;
+        this.busy.set(true);
+        const generation = ++this.generation;
+        try {
+            const response = await firstValueFrom(this.api.post<{ token: string }>('auth/admin/password-setup', { challenge: this.setupChallenge, password, password_confirmation }));
+            if (generation !== this.generation) return false;
+            if (!response.success || !response.data?.token) throw new Error('Invalid setup response');
+            return await this.startSession(response.data.token, generation);
+        } catch (error) {
+            if (this.bearer && generation === this.generation) this.clear(false);
+            throw error;
+        } finally { this.busy.set(false); }
+    }
+
+    async changePassword(current_password: string, password: string, password_confirmation: string): Promise<void> {
+        if (this.busy()) return;
+        this.busy.set(true);
+        try {
+            const response = await firstValueFrom(this.api.patch<null>('admin/profile/password', { current_password, password, password_confirmation }));
+            if (!response.success) throw new Error('Unconfirmed password change');
+            this.clear(false);
+            await this.router.navigateByUrl('/login?passwordChanged=1');
+        } finally { this.busy.set(false); }
+    }
 
     async restore(): Promise<void> {
         if (this.settings.error()) return;
@@ -57,17 +91,15 @@ export class SessionService {
         this.busy.set(true);
         const generation = ++this.generation;
         try {
-            const result = await firstValueFrom(this.api.post<{ token: string }>('auth/admin/login', { email, password, preferred_language: this.locale.language() }).pipe(timeout(20000)));
+            const result = await firstValueFrom(this.api.post<{ token?: string; requires_password_change?: boolean; challenge?: string }>('auth/admin/login', { email, password, preferred_language: this.locale.language() }).pipe(timeout(20000)));
             if (generation !== this.generation) return false;
+            if (result.success && result.data?.requires_password_change && /^[a-f0-9]{64}$/.test(result.data.challenge ?? '')) {
+                this.bearer = null; this.forgetSavedSession(); this.profile.set(null);
+                this.setupChallenge = result.data.challenge!; this.needsPasswordSetup.set(true);
+                return false;
+            }
             if (!result.success || !result.data?.token) throw new Error('Invalid login response');
-            this.bearer = result.data.token;
-            const identity = await this.readIdentity();
-            if (generation !== this.generation) return false;
-            this.acceptIdentity(identity);
-            try { sessionStorage.setItem(this.storageKey, JSON.stringify({ apiBaseUrl: this.settings.apiBaseUrl(), token: this.bearer })); }
-            catch { /* Storage may be disabled; this login still works in memory. */ }
-            this.ended.set(false);
-            return true;
+            return await this.startSession(result.data.token, generation);
         } catch (error) {
             // A successful login followed by a failed identity check must not leave an authenticated UI.
             if (generation === this.generation) this.clear(false);
@@ -93,8 +125,19 @@ export class SessionService {
 
     private async readIdentity(): Promise<AdminProfile> {
         const identity = await firstValueFrom(this.api.get<AdminProfile>('admin/profile').pipe(timeout(20000)));
-        if (!identity.success || !identity.data?.employee_id) throw new Error('Invalid identity response');
+        if (!identity.success || !identity.data?.employee_id || !Array.isArray(identity.data.permissions)) throw new Error('Invalid identity response');
         return identity.data;
+    }
+
+    private async startSession(token: string, generation: number): Promise<boolean> {
+        this.bearer = token;
+        const identity = await this.readIdentity();
+        if (generation !== this.generation) return false;
+        this.acceptIdentity(identity); this.cancelSetup();
+        try { sessionStorage.setItem(this.storageKey, JSON.stringify({ apiBaseUrl: this.settings.apiBaseUrl(), token })); }
+        catch { /* Login remains available in memory if storage is disabled. */ }
+        this.ended.set(false);
+        return true;
     }
 
     async toggleLanguage(): Promise<void> {
@@ -127,6 +170,7 @@ export class SessionService {
         this.bearer = null;
         this.forgetSavedSession();
         this.profile.set(null);
+        this.cancelSetup();
         this.languageSaving.set(false); this.languageSaveFailed.set(false);
         this.ended.set(ended);
     }

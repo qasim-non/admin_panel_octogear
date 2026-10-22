@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page } from './fixtures';
 
 async function setup(page: Page, preferred: 'ar' | 'en' | null = 'ar', restore = true) {
     const state = { preferred, writes: 0, reads: 0, status: 200, delay: 0, dashboardLocales: [] as string[] };
@@ -9,7 +10,7 @@ async function setup(page: Page, preferred: 'ar' | 'en' | null = 'ar', restore =
         if (req.method() === 'OPTIONS') return route.fulfill({ status: 204 });
         if (path.endsWith('/auth/admin/login')) { state.preferred ??= req.postDataJSON().preferred_language; return route.fulfill({ json: envelope({ token: 'language-test' }) }); }
         expect(req.headers()['authorization']).toBe('Bearer language-test');
-        if (path.endsWith('/admin/profile')) { state.reads++; return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Admin', email: 'admin@example.test', assigned_role: 'admin', status: 'active', preferred_language: state.preferred }) }); }
+        if (path.endsWith('/admin/profile')) { state.reads++; return route.fulfill({ json: envelope({ employee_id: 1, permissions: allPermissions, name: 'Test Admin', email: 'admin@example.test', assigned_role: 'admin', status: 'active', preferred_language: state.preferred }) }); }
         if (path.endsWith('/admin/profile/language')) {
             state.writes++; expect(req.method()).toBe('PATCH');
             expect(Object.keys(req.postDataJSON())).toEqual(['preferred_language']);

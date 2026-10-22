@@ -6,7 +6,7 @@
 @else if (error()) { <div class="surface-panel error-panel"><p-message severity="error">{{ error() }}</p-message><button pButton [label]="locale.t('retry')" (click)="refresh()"></button></div> }
 @else if (data(); as store) {
     <section class="surface-panel profile-banner"><div><p class="eyebrow">{{ locale.t('storeId') }} #{{ store.id }}</p><h2>{{ store.name }}</h2><span class="profile-city"><i class="pi pi-map-marker" aria-hidden="true"></i>{{ store.city?.name ?? locale.t('notProvided') }}</span></div><app-store-status [status]="store.status"/></section>
-    @if (store.pending_change_request_id; as requestId) { <section class="surface-panel pending-change"><div><strong>{{ locale.t('storePendingChange') }}</strong><p>{{ locale.t('storePendingChangeHint') }}</p></div><a pButton severity="secondary" [outlined]="true" [routerLink]="['/store-requests', requestId]">{{ locale.t('reviewRequest') }} #{{ requestId }}</a></section> }
+    @if (session.can('requests.view') && store.pending_change_request_id; as requestId) { <section class="surface-panel pending-change"><div><strong>{{ locale.t('storePendingChange') }}</strong><p>{{ locale.t('storePendingChangeHint') }}</p></div><a pButton severity="secondary" [outlined]="true" [routerLink]="['/store-requests', requestId]">{{ locale.t('reviewRequest') }} #{{ requestId }}</a></section> }
     <div class="detail-grid"><div class="detail-main">
         <section class="surface-panel details-card"><h2><i class="pi pi-shop" aria-hidden="true"></i>{{ locale.t('storeInformation') }}</h2><dl class="detail-fields">
             <div><dt>{{ locale.t('storeName') }}</dt><dd>{{ store.name }}</dd></div>
@@ -24,11 +24,11 @@
             @for (picture of store.pictures; track picture.id; let index = $index) { @if (mediaPath(picture.url, 'stores', store.id); as path) { <app-private-image [path]="path" [label]="locale.t('storePhoto') + ' ' + (index + 1)"/> } }
         </div>@if (!store.pictures.length) { <p class="gallery-empty">{{ locale.t('noStorePhotos') }}</p> }</section>
     </div><aside class="detail-aside">
-        <section class="surface-panel access-card"><span class="access-icon"><i class="pi pi-power-off" aria-hidden="true"></i></span><h2>{{ locale.t('storeActivation') }}</h2>
+        @if (session.can('stores.manage')) { <section class="surface-panel access-card"><span class="access-icon"><i class="pi pi-power-off" aria-hidden="true"></i></span><h2>{{ locale.t('storeActivation') }}</h2>
             <p>{{ locale.t(store.status === 'active' ? 'activeStoreExplanation' : 'inactiveStoreExplanation') }}</p>
             @if (needsRefresh()) { <p-message severity="warn">{{ mutationError() }}</p-message><button pButton severity="secondary" [label]="locale.t('refreshStore')" (click)="refresh()"></button> }
             @else { <button pButton [severity]="store.status === 'active' ? 'danger' : 'primary'" [outlined]="store.status === 'active'" [icon]="store.status === 'active' ? 'pi pi-pause' : 'pi pi-check'" [label]="locale.t(store.status === 'active' ? 'deactivateStore' : 'activateStore')" [disabled]="saving()" (click)="ask()"></button> }
-        </section>
+        </section> }
         <section class="surface-panel details-card"><h2><i class="pi pi-user" aria-hidden="true"></i>{{ locale.t('storeOwner') }}</h2>@if (store.owner; as owner) { <dl class="detail-fields compact-fields"><div><dt>{{ locale.t('fullName') }}</dt><dd>{{ owner.full_name }}</dd></div><div><dt>{{ locale.t('providerId') }}</dt><dd>#{{ owner.id }}</dd></div><div><dt>{{ locale.t('phoneSearch') }}</dt><dd><bdi dir="ltr">{{ owner.mobile }}</bdi></dd></div></dl><a class="detail-link" [routerLink]="['/providers', owner.id]">{{ locale.t('viewProvider') }} <i class="pi pi-arrow-up-right" aria-hidden="true"></i></a> } @else { <p>{{ locale.t('notProvided') }}</p> }</section>
         <section class="surface-panel details-card"><h2><i class="pi pi-chart-bar" aria-hidden="true"></i>{{ locale.t('storeSummary') }}</h2><dl class="detail-fields compact-fields"><div><dt>{{ locale.t('storeCarsCount') }}</dt><dd class="metric-value">{{ number(store.cars_count) }}</dd></div><div><dt>{{ locale.t('storeAverageRating') }}</dt><dd>@if (store.average_rating !== null) { <i class="pi pi-star-fill rating-star" aria-hidden="true"></i> {{ number(store.average_rating) }} / {{ number(5) }} } @else { {{ locale.t('storeNoRatings') }} }</dd></div></dl></section>
     </aside></div>

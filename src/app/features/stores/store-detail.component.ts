@@ -1,3 +1,4 @@
+import { SessionService } from '../../core/session.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -20,6 +21,7 @@ import { StoreStatusComponent } from './store-status.component';
     templateUrl: './store-detail.component.html', styleUrls: ['../users/users.scss', './stores.scss']
 })
 export class StoreDetailComponent {
+    readonly session = inject(SessionService);
     readonly locale = inject(LocaleService);
     private readonly route = inject(ActivatedRoute);
     private readonly api = inject(StoreApi);

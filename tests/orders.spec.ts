@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page } from './fixtures';
 
 async function setup(page: Page) {
     const state = { calls: [] as URL[], cities: 0, images: 0, status: 200, detailStatus: 200, delay: '', rows: Array.from({ length: 17 }, (_, i) => ({
@@ -18,7 +19,7 @@ async function setup(page: Page) {
         const req = route.request(), url = new URL(req.url()), path = url.pathname;
         if (req.method() === 'OPTIONS') return route.fulfill({ status: 204 });
         expect(req.headers()['authorization']).toBe('Bearer orders-test');
-        if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Admin', status: 'active' }) });
+        if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, permissions: allPermissions, name: 'Test Admin', status: 'active' }) });
         if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: envelope(req.postDataJSON()) });
         if (path.endsWith('/admin/cities/options')) { state.cities++; return route.fulfill({ json: envelope([{ id: 1, name_en: 'Riyadh', name_ar: 'الرياض' }, { id: 2, name_en: 'Jeddah', name_ar: 'جدة' }]) }); }
         if (path.endsWith('/admin/orders')) {

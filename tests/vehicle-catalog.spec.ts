@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page } from './fixtures';
 
 async function setup(page: Page, start = '/car-companies') {
     const labels = [
@@ -27,7 +28,7 @@ async function setup(page: Page, start = '/car-companies') {
         expect(request.headers()['authorization']).toBe('Bearer catalog-test');
         if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: { success: true, data: request.postDataJSON() } });
         expect(request.method()).toBe('GET');
-        if (path.endsWith('/admin/profile')) return route.fulfill({ json: { success: true, data: { employee_id: 1, name: 'Test Admin', status: 'active' } } });
+        if (path.endsWith('/admin/profile')) return route.fulfill({ json: { success: true, data: { employee_id: 1, permissions: allPermissions, name: 'Test Admin', status: 'active' } } });
         if (path.endsWith('/car-companies/options')) {
             state.options++;
             if (state.optionsDelay) await new Promise(resolve => setTimeout(resolve, state.optionsDelay));

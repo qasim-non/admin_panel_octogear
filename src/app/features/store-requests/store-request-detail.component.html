@@ -33,7 +33,7 @@
         <aside class="detail-aside">
             <section class="surface-panel access-card"><span class="access-icon"><i class="pi pi-check-square" aria-hidden="true"></i></span><h2>{{ locale.t('reviewDecision') }}</h2>
                 @if (needsRefresh()) { <p-message severity="warn">{{ mutationError() }}</p-message><button pButton severity="secondary" [label]="locale.t('refreshRequest')" (click)="refresh()"></button> }
-                @else if (request.request_status === 'pending') {
+                @else if (request.request_status === 'pending' && session.can('requests.manage')) {
                     <p>{{ locale.t(request.request_type === 'new_store' ? 'newStoreEffect' : 'storeChangeEffect') }}</p>
                     <button pButton icon="pi pi-check" [label]="locale.t('approveRequest')" [disabled]="saving()" (click)="ask('accept')"></button>
                     <button pButton severity="danger" [outlined]="true" icon="pi pi-times" [label]="locale.t('rejectRequest')" [disabled]="saving()" (click)="ask('reject')"></button>

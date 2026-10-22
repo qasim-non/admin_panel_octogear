@@ -1,4 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page } from './fixtures';
 
 // Synthetic API fixtures only: no live review decisions or uploaded documents.
 const envelope = (data: unknown) => ({ success: true, message: 'OK', data });
@@ -26,7 +27,7 @@ async function setup(page: Page) {
         const url = new URL(req.url()), path = url.pathname;
         expect(req.headers()['authorization']).toBe('Bearer review-test-token');
         if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: envelope({ preferred_language: route.request().postDataJSON().preferred_language }) });
-        if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'employee', status: 'active' }) });
+        if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, permissions: allPermissions, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'admin', status: 'active' }) });
         if (path.endsWith('/admin/cities/options')) {
             state.cities++; expect(url.search).toBe('');
             return route.fulfill({ json: envelope([{ id: 1, name_en: 'Riyadh', name_ar: 'الرياض' }, { id: 2, name_en: 'Jeddah', name_ar: 'جدة' }]) });

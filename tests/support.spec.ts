@@ -1,4 +1,5 @@
-import { test, expect, Page, WebSocketRoute } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page, WebSocketRoute } from './fixtures';
 
 const timestamp = '2026-10-22T10:00:00Z';
 const msg = (id: number, content = `Message ${id}`, sender_kind = 'user') => ({ id, content, sender_kind, client_message_id: `00000000-0000-4000-8000-${String(id).padStart(12, '0')}`, created_at: timestamp });
@@ -32,7 +33,7 @@ async function setup(page: Page, live = false, options: {configStatus?: number; 
         const ok = (data: unknown, meta?: unknown) => route.fulfill({json:{success:true,data,...(meta ? {meta} : {})}});
         const fail = (status: number) => route.fulfill({status,json:{success:false,message:'Rejected'}});
         if (path.endsWith('/admin/profile/language')) return ok(body);
-        if (path.endsWith('/admin/profile')) return ok({employee_id:1,name:'Test Admin',status:'active'});
+        if (path.endsWith('/admin/profile')) return ok({employee_id: 1, permissions: allPermissions,name:'Test Admin',status:'active'});
         if (path.endsWith('/admin/support/realtime/auth')) { state.socketAuth.push(body); return ok({auth:'test:signature'}); }
         if (path.endsWith('/admin/support/realtime')) {
             if (state.configDelay) await new Promise(resolve=>setTimeout(resolve,state.configDelay));

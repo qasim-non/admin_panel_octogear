@@ -3,7 +3,7 @@
 }
 <header class="page-heading">
     <div><p class="eyebrow">{{ locale.t('vehicleCatalog') }}</p><h1>{{ locale.t(title) }}</h1><p>{{ locale.t(isCompanies ? 'companiesIntro' : 'modelsIntro') }}</p></div>
-    <div class="catalog-toolbar"><button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button><button pButton icon="pi pi-plus" [label]="locale.t(isCompanies ? 'addCompany' : 'addModel')" (click)="openEditor()"></button></div>
+    <div class="catalog-toolbar"><button pButton severity="secondary" [outlined]="true" icon="pi pi-refresh" [label]="locale.t('refresh')" [disabled]="loading()" (click)="refresh()"></button>@if (session.can('catalog.manage')) { <button pButton icon="pi pi-plus" [label]="locale.t(isCompanies ? 'addCompany' : 'addModel')" (click)="openEditor()"></button> }</div>
 </header>
 @if (notice()) { <div class="catalog-notice" role="status"><p-message severity="success">{{ notice() }}</p-message></div> }
 <section class="surface-panel directory-panel" aria-labelledby="catalog-heading">
@@ -33,7 +33,7 @@
                 @if (!isCompanies) { <td><bdi>{{ row.company.name }}</bdi></td> }
                 <td>{{ (isCompanies ? row.country?.name : row.company?.country?.name) || locale.t('notProvided') }}</td>
                 @if (isCompanies) { <td><span class="count-badge">{{ number(row.models_count) }}</span></td><td><a class="catalog-action" routerLink="/car-models" [queryParams]="modelsQuery(row.id)" [attr.aria-label]="locale.t('viewModels') + ' — ' + row.name">{{ locale.t('viewModels') }}<i [class]="locale.language() === 'ar' ? 'pi pi-arrow-left' : 'pi pi-arrow-right'" aria-hidden="true"></i></a></td> }
-                <td><div class="catalog-row-actions"><button pButton severity="secondary" [text]="true" icon="pi pi-pencil" [attr.aria-label]="locale.t('catalogEdit') + ' — ' + row.name" (click)="openEditor(row)"></button><button pButton severity="danger" [text]="true" icon="pi pi-trash" [attr.aria-label]="locale.t('catalogDelete') + ' — ' + row.name" (click)="openEditor(row, true)"></button></div></td>
+                <td>@if (session.can('catalog.manage')) { <div class="catalog-row-actions"><button pButton severity="secondary" [text]="true" icon="pi pi-pencil" [attr.aria-label]="locale.t('catalogEdit') + ' — ' + row.name" (click)="openEditor(row)"></button><button pButton severity="danger" [text]="true" icon="pi pi-trash" [attr.aria-label]="locale.t('catalogDelete') + ' — ' + row.name" (click)="openEditor(row, true)"></button></div> }</td>
             </tr></ng-template>
         </p-table></div>
     }

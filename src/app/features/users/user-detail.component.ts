@@ -1,3 +1,4 @@
+import { SessionService } from '../../core/session.service';
 import { ProviderStoresComponent } from '../providers/provider-stores.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
@@ -19,6 +20,7 @@ import { UserStatusComponent } from './user-status.component';
     templateUrl: './user-detail.component.html', styleUrl: './users.scss'
 })
 export class UserDetailComponent {
+    readonly session = inject(SessionService);
     readonly locale = inject(LocaleService);
     private readonly api = inject(UserApi);
     private readonly destroyRef = inject(DestroyRef);

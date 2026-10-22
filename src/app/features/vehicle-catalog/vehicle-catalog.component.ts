@@ -1,3 +1,4 @@
+import { SessionService } from '../../core/session.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
@@ -19,6 +20,7 @@ import { CatalogFilters, CatalogKind, CatalogRow, VehicleCatalogApi } from './ve
     imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, MessageModule, SkeletonModule, TableModule, CompanySelectComponent, CatalogEditorComponent],
     templateUrl: './vehicle-catalog.component.html', styleUrls: ['../users/users.scss', './vehicle-catalog.scss'] })
 export class VehicleCatalogComponent {
+    readonly session = inject(SessionService);
     readonly locale = inject(LocaleService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);

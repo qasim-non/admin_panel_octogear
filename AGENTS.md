@@ -6,6 +6,7 @@ These instructions apply to `C:/Tamkkun/OctoGearProject/OctoGear-admin`.
 
 1. Read this file, `README.md`, and `PROJECT_DOCUMENTATION.md`, including the current progress record and the complete sections relevant to the task.
 2. Read any applicable nested instructions and feature documentation. Retrieve truncated content before proceeding.
+   For admin accounts, authentication, roles, or personal settings, read `docs/ADMIN_ACCOUNTS_STEP.md`.
 3. Inspect the existing implementation before adding components, API calls, helpers, or business rules. Preserve unrelated edits.
 4. Briefly identify the guidance used and the bounded implementation step before changing application code.
 

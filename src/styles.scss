@@ -92,3 +92,5 @@ html[dir='rtl'] .octogear-menu a.active-route { box-shadow: inset -3px 0 #f7c83c
   .metric-value i { font-size: 15px; padding: 9px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+.settings-link { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border-radius: 8px; color: var(--text-color); }
+.settings-link:hover { background: var(--surface-hover); }

@@ -15,13 +15,22 @@
         <div class="mobile-brand"><img src="brand/octogear.png" alt="" width="48" height="48"><strong dir="ltr">OCTOGEAR</strong></div>
         <span class="heading-rule" aria-hidden="true"></span>
         <p class="eyebrow">{{ locale.t('adminPanel') }}</p>
-        <h1 id="login-heading">{{ locale.t('welcome') }}</h1>
-        <p class="intro">{{ locale.t('loginIntro') }}</p>
+        <h1 id="login-heading">{{ locale.t(session.needsPasswordSetup() ? 'setupPasswordTitle' : 'welcome') }}</h1>
+        <p class="intro">{{ locale.t(session.needsPasswordSetup() ? 'setupPasswordIntro' : 'loginIntro') }}</p>
         @if (settings.error()) {
           <p-message severity="error">{{ locale.t('configBody') }}</p-message>
           <button pButton type="button" (click)="reload()">{{ locale.t('reload') }}</button>
+        } @else if (session.needsPasswordSetup()) {
+          <form [formGroup]="setupForm" (ngSubmit)="finishSetup()" novalidate>
+            @if (error()) { <p-message severity="error">{{ error() }}</p-message> }
+            <div class="field"><app-password-field inputId="new-password" [control]="setupForm.controls.password" [label]="locale.t('newPassword')" [hint]="locale.t('securePasswordHint')" [busy]="session.busy()" /></div>
+            <div class="field"><app-password-field inputId="confirm-password" [control]="setupForm.controls.password_confirmation" [label]="locale.t('confirmPassword')" [busy]="session.busy()" /></div>
+            <button pButton type="submit" class="sign-in-button" [loading]="session.busy()" [disabled]="session.busy()">{{ locale.t('setPasswordContinue') }}</button>
+            <button pButton type="button" severity="secondary" [text]="true" [disabled]="session.busy()" (click)="backToLogin()">{{ locale.t('backToSignIn') }}</button>
+          </form>
         } @else {
           <form [formGroup]="form" (ngSubmit)="submit()" novalidate [attr.aria-busy]="session.busy()">
+            @if (passwordChanged) { <p-message severity="success">{{ locale.t('passwordChangedSignIn') }}</p-message> }
             @if (session.ended() && !error()) { <p-message severity="warn">{{ locale.t('sessionEnded') }}</p-message> }
             @if (error()) { <p-message severity="error" role="alert">{{ error() }}</p-message> }
             <div class="field">

@@ -1,5 +1,70 @@
 # OctoGear Admin project documentation
 
+## Latest slice — Admin accounts, permissions and settings (2026-10-22)
+
+The owner postponed email invitations and requested manually shared temporary
+passwords, mandatory first-login replacement, role-based pages/API access, personal
+settings and the sidebar order Chats → Sub-admins → Car companies → Car models.
+Implemented in both projects using the existing stack, branding and typed en/ar.
+Read `docs/ADMIN_ACCOUNTS_STEP.md` for the complete contracts, role matrix and ordered
+Laravel/Angular review. This current section supersedes older deferred-role/staff
+notes below without rewriting historical verification records.
+
+Sub-admins has 25-row filtering/pagination, role previews, row-data reuse for details
+and edits, on-demand security history, current-password confirmation, temporary
+reset and archival. Generated passwords contain exactly 16 cryptographically random
+characters. Copy/share guidance appears after creation/reset; credentials remain in
+memory and Laravel stores hashes only. Temporary credentials expire after 24 hours.
+Login returns a single-use, ten-minute hashed challenge before password replacement;
+no normal bearer token is issued until setup completes. Access edits/password changes
+revoke existing sessions. Self-access changes and removal of the last usable
+Administrator are guarded. Settings provides password changes and saved language.
+
+Laravel centralizes permissions in AdminPermissions/AdminPolicy. Every business
+admin route has permission middleware; media, support delivery and nested payment
+data enforce the same rules. The frontend consumes effective server permissions and
+fails closed against an older profile response without permissions. Existing role
+assignments/passwords are preserved; inactive accounts now correctly lose access.
+Administrator: all; Manager: operations without staff/cancel/refund; Employee: support
+and limited reads; HR: staff reads; Developer: catalog CRUD. See the exact matrix.
+
+Verification completed:
+
+- Angular typecheck and production build passed. Full browser suite: **108/108**
+  passed with tracing disabled. After a local pagination-width correction, the final
+  build and all **9/9** admin browser scenarios passed again. Desktop, Arabic mobile,
+  password setup and personal settings screenshots were visually inspected. A final
+  three-scenario visual run passed with animations disabled for stable captures.
+- Final focused Laravel run: **63 tests, 808 assertions passed**. Changed PHP syntax
+  checks and Pint passed, as did tracked diff whitespace checks. A numeric-zero
+  account search edge case was corrected and added to the directory regression.
+- Full Laravel suite at the earlier checkpoint: **644 tests, 17,350 assertions;
+  637 passed, 7 failed**. All seven failures were reproduced using the original
+  committed AuthService in a separate bootstrap, without replacing working files:
+  AuthRateLimitTest (two OTP throttling cases), GeneralOrderDetailsTest (quantity
+  exposure), SellerApplicationTest (OTP response exposure), and TestingOtpTest
+  (production exposure and local/staging opt-out cases).
+- The unchanged OtpService currently returns OTP codes unconditionally. This is an
+  existing production security issue, not fixed or hidden by this admin slice.
+  Resolve OTP exposure and the outstanding regressions before production sign-off.
+
+The additive migration `2026_10_22_180000_add_admin_account_security.php` was applied
+only to the verified local MySQL database (APP_ENV=local, host 127.0.0.1), then
+confirmed present with the existing active Administrator still available. No reset,
+blanket migration, seed execution or real account/password changes were performed
+by this slice. Browser tests explicitly mock app-config.json/API/socket responses;
+Laravel automated tests use isolated SQLite. Live hosted end-to-end and MySQL
+concurrency/load checks remain unperformed.
+
+The owner's hosted runtime API URL, unrelated seeder work and unrelated files were
+preserved. No remote deployment, email or support message was sent. Deploy the
+updated backend and migration to Bluehost before deploying this web build, review
+existing role assignments, and restart realtime workers. The hosted API cannot serve
+the new frontend contract until updated. Email invitations/recovery, MFA, a custom
+role designer and archived-account restoration are deferred. See the guide for sole
+Administrator recovery limits. README/architecture/project guidance were updated;
+the README's existing encoded tail was preserved byte for byte.
+
 ## Decision record — 2026-10-19
 
 The owner approved the first navy-and-white split login concept and requested a complete web admin panel developed incrementally, using the existing Laravel API. The web project location is `C:/Tamkkun/OctoGearProject/OctoGear-admin`.

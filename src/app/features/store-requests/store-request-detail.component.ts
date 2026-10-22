@@ -1,3 +1,4 @@
+import { SessionService } from '../../core/session.service';
 import { locationLink, storeMediaPath } from '../../shared/store-links';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
@@ -22,6 +23,7 @@ import { RequestStatusComponent } from './request-status.component';
     templateUrl: './store-request-detail.component.html', styleUrls: ['../users/users.scss', './store-requests.scss']
 })
 export class StoreRequestDetailComponent {
+    readonly session = inject(SessionService);
     readonly locale = inject(LocaleService);
     private readonly route = inject(ActivatedRoute);
     private readonly api = inject(StoreRequestApi);

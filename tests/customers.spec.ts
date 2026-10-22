@@ -1,4 +1,5 @@
-import { test, expect, Page, Route } from '@playwright/test';
+import { allPermissions } from './fixtures';
+import { test, expect, Page, Route } from './fixtures';
 
 // Synthetic fixtures only. Every API request is intercepted; no retained customer is modified.
 const names = ['Nasser Al-Harbi', 'Sara Abdullah', 'Omar Al-Qahtani', 'Noura Khalid', 'Faisal Hassan',
@@ -37,7 +38,7 @@ async function setup(page: Page) {
             return route.fulfill({ json: envelope(cityFixtures.map(city => ({ id: city.id, name_en: city.en, name_ar: city.ar }))) });
         }
         if (path.endsWith('/admin/profile/language')) return route.fulfill({ json: envelope({ preferred_language: route.request().postDataJSON().preferred_language }) });
-        if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'employee', status: 'active' }) });
+        if (path.endsWith('/admin/profile')) return route.fulfill({ json: envelope({ employee_id: 1, permissions: allPermissions, name: 'Test Administrator', email: 'admin@example.test', assigned_role: 'admin', status: 'active' }) });
         if (path.endsWith('/admin/dashboard')) return route.fulfill({ json: envelope({
             users: { total: 27, customers: 27, providers: 0 }, stores: { total: 0, pending_requests: 0 },
             orders: { total: 0, pending: 0, awaiting_payment: 0, paid: 0, completed: 0, cancelled: 0 }

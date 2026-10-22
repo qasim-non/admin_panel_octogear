@@ -1,0 +1,44 @@
+<p-dialog [visible]="true" (visibleChange)="close()" [modal]="true" [draggable]="false" [resizable]="false" [closable]="!busy()" [closeOnEscape]="!busy()" [header]="locale.t(title)" [style]="{width: '44rem', maxWidth: 'calc(100vw - 2rem)'}">
+    @if (mode() === 'detail') {
+        @if (row(); as account) {
+            <div class="staff-profile"><span class="staff-avatar"><i class="pi pi-user" aria-hidden="true"></i></span><div><h2>{{ account.name }}</h2><p dir="ltr">{{ account.email }}</p></div></div>
+            <dl class="staff-facts"><div><dt>{{ locale.t('staffId') }}</dt><dd>#{{ account.employee_id }}</dd></div><div><dt>{{ locale.t('mobile') }}</dt><dd dir="ltr">{{ account.mobile }}</dd></div><div><dt>{{ locale.t('adminRole') }}</dt><dd>{{ locale.t(roleKey(account.assigned_role)) }}</dd></div><div><dt>{{ locale.t('lastSignIn') }}</dt><dd>{{ account.last_login_at ? (account.last_login_at | date:'medium':'UTC') : locale.t('neverSignedIn') }}</dd></div></dl>
+            <h3>{{ locale.t('rolePermissions') }}</h3><ul class="permission-list">@for (permission of permissions(); track permission) { <li><i class="pi pi-check" aria-hidden="true"></i>{{ locale.t(permissionKey(permission)) }}</li> }</ul>
+            <button pButton type="button" severity="secondary" [outlined]="true" [loading]="eventLoading()" (click)="loadEvents()">{{ locale.t('viewSecurityHistory') }}</button>
+            @if (eventError()) { <p-message severity="error">{{ eventError() }}</p-message> }
+            @if (eventMeta(); as meta) {
+                <ol class="security-history">@for (event of events(); track event.id) { <li><strong>{{ eventLabel(event.action) }}</strong><span>{{ event.created_at | date:'medium':'UTC' }} · {{ locale.t('staffId') }} #{{ event.actor_id ?? '—' }}</span></li> } @empty { <li>{{ locale.t('noSecurityEvents') }}</li> }</ol>
+                <div class="staff-actions"><button pButton severity="secondary" [disabled]="eventLoading() || meta.current_page <= 1" (click)="loadEvents(meta.current_page - 1)">{{ locale.t('previousPage') }}</button><span>{{ meta.current_page }} / {{ meta.last_page }}</span><button pButton severity="secondary" [disabled]="eventLoading() || meta.current_page >= meta.last_page" (click)="loadEvents(meta.current_page + 1)">{{ locale.t('nextPage') }}</button></div>
+            }
+        }
+    } @else {
+        <form id="staff-form" [formGroup]="form" (ngSubmit)="save()" novalidate [attr.aria-busy]="busy()">
+            @if (error()) { <p-message severity="error">{{ error() }}</p-message> }
+            @if (uncertain()) { <p-message severity="warn">{{ locale.t('adminWriteUncertain') }}</p-message> }
+            @if (saved()) { <p-message severity="success">{{ locale.t('temporaryPasswordShare') }}</p-message> }
+            @if (!saved()) {
+                @if (editing) {
+                    <div class="staff-form-grid">
+                        <div class="staff-field"><label for="staff-name">{{ locale.t('adminName') }}</label><input pInputText id="staff-name" formControlName="name" autocomplete="off" [readOnly]="busy()" [invalid]="form.controls.name.touched && form.controls.name.invalid" /></div>
+                        <div class="staff-field"><label for="staff-email">{{ locale.t('email') }}</label><input pInputText id="staff-email" type="email" formControlName="email" dir="ltr" autocomplete="off" [readOnly]="busy()" [invalid]="form.controls.email.touched && form.controls.email.invalid" /></div>
+                        <div class="staff-field"><label for="staff-mobile">{{ locale.t('mobile') }}</label><input pInputText id="staff-mobile" formControlName="mobile" dir="ltr" inputmode="tel" autocomplete="off" [readOnly]="busy()" [invalid]="form.controls.mobile.touched && form.controls.mobile.invalid" /><small>{{ locale.t('saudiMobileHint') }}</small></div>
+                        <div class="staff-field"><label for="staff-language">{{ locale.t('preferredLanguage') }}</label><p-select inputId="staff-language" formControlName="preferred_language" [options]="languageOptions" optionLabel="label" optionValue="value" appendTo="body" /></div>
+                        <div class="staff-field"><label for="staff-role">{{ locale.t('adminRole') }}</label><p-select inputId="staff-role" formControlName="assigned_role" [options]="roleOptions()" optionLabel="label" optionValue="value" appendTo="body" /></div>
+                        @if (mode() === 'edit') { <div class="staff-field"><label for="staff-status">{{ locale.t('adminStatus') }}</label><p-select inputId="staff-status" formControlName="status" [options]="statusOptions()" optionLabel="label" optionValue="value" appendTo="body" /></div> }
+                    </div>
+                    <section class="permission-preview"><h3>{{ locale.t('rolePermissions') }}</h3><ul class="permission-list">@for (permission of permissions(); track permission) { <li><i class="pi pi-check" aria-hidden="true"></i>{{ locale.t(permissionKey(permission)) }}</li> } @empty { <li>{{ locale.t('chooseRole') }}</li> }</ul></section>
+                    @if (mode() === 'edit') { <p class="staff-note">{{ locale.t('accessChangeNotice') }}</p> }
+                }
+                @if (mode() === 'archive') { <p-message severity="warn">{{ locale.t('archiveAdminNotice') }} <strong>{{ row()?.name }}</strong></p-message> }
+                @if (mode() === 'reset') { <p class="staff-note">{{ locale.t('resetAdminNotice') }} <strong>{{ row()?.name }}</strong></p> }
+            }
+            @if (passwordMode) { <div class="staff-field"><app-password-field inputId="temporary-password" [control]="form.controls.password" [label]="locale.t('temporaryPassword')" [hint]="locale.t('temporaryPasswordHint')" [generate]="!saved()" [copyable]="true" [locked]="saved()" [busy]="busy()" /></div>
+                @if (saved()) { <p class="staff-note">{{ locale.t('copyBeforeClosing') }}</p> }
+            }
+            @if (!saved()) { <div class="staff-field"><app-password-field inputId="operator-password" [control]="form.controls.current_password" [label]="locale.t('yourCurrentPassword')" autocomplete="current-password" [hint]="locale.t('confirmIdentityHint')" [busy]="busy()" /></div> }
+        </form>
+    }
+    <ng-template #footer><button pButton type="button" severity="secondary" [outlined]="true" [disabled]="busy()" (click)="close()">{{ locale.t(saved() || mode() === 'detail' ? 'close' : 'cancel') }}</button>
+        @if (mode() !== 'detail' && !saved()) { <button pButton type="submit" form="staff-form" [severity]="mode() === 'archive' ? 'danger' : 'primary'" [loading]="busy()" [disabled]="busy() || uncertain() || (editing && !roles().length)">{{ locale.t(mode() === 'archive' ? 'archiveAdmin' : 'saveAdmin') }}</button> }
+    </ng-template>
+</p-dialog>
